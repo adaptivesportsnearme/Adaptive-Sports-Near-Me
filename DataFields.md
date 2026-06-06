@@ -1,8 +1,9 @@
-# Data Fields
+# Data Fields 
+
 This is a listing of all types of data we need to store, with a standardized field name for each. By standardizing the names and formats of all information we are using, we will be able to easily pass information between modules. All strings should be stored in title case.
-=======================================================================================
-### Login
-a database of login information, so that administrative actions may be securely accessed
+
+## Login
+A database of login information, so that administrative actions may be securely accessed
 
 username
  - A given user’s username
@@ -10,7 +11,7 @@ username
 encrypted_password
  - The hash value of a user’s password
 
-### Sports
+## Sports
 A database of various adaptive sports and information about them.
 
 sport_name
@@ -38,7 +39,7 @@ sport_disability
  - The type of disability that this sport supports. If there are multiple, we will store this as multiple entries.
 
 
-### Sports Instance
+## Sports Instance
 The core database of the project, listing individual sports opportunities. When users use the site, the results will be drawn from this database.
 
 Note that it might be best to divide this into smaller databases? But I think in general we will want to access all of this information as a batch for a listing. If we are going to trim it down more we can always have our primary database have only information necessary for initials results display, and then pull from other databases if the user clicks on the listing. Either way, the following seem like good conventions to follow.
@@ -62,7 +63,7 @@ instance_state
  - State of the sport opportunity
 
 instance_address_line_1
- - first address line   
+ - First address line
 
 instance_address_line_2
 
@@ -96,15 +97,15 @@ instance_repeat (string)
 
 instance_age_floor
 instance_age_ceil
- - with instance_age_floor, stores the age range of the instance. If both age_floor and age_ceil are null, then the instance is all-ages. If age_floor is null but age_ceil is not, then anyone up to the ceiling age may participate. If age_floor is not null, but age_ceil is, then anyone above the age floor may participate.
+ - With instance_age_floor, stores the age range of the instance. If both age_floor and age_ceil are null, then the instance is all-ages. If age_floor is null but age_ceil is not, then anyone up to the ceiling age may participate. If age_floor is not null, but age_ceil is, then anyone above the age floor may participate.
 
 instance_cost (double)
- - cost of this instance in specific.
+ - The cost of this instance in specific.
 
 instance_quality (double)
  - An abstract score that conveys the relative reliability that an instance’s information will be accurate to a real-life event. I’ve renamed this metric from “freshness” in the initial presentation, because I feel it’s more appropriate, and allows us to use similar metrics for organizations without loss of meaning.
 
-### Instance Sources
+## Instance Sources
 
 A small database storing what links were used as sources for a given instance.
 
@@ -113,7 +114,7 @@ instance_id
 instance_site
  - A url that links to a webpage our data collector used as a source for the provided instance.
 
-### Organizations
+## Organizations
 
 This database stores adaptive sports organizations. Due to Karen’s involvement, this is likely to run more towards veteran and law enforcement officer (LEO) heavy, but hopefully this will balance out. We can probably implement this later in development, as it’s not strictly necessary, but having a reliable database of organizations that are likely to aggregate listings will likely speed up the update process by an enormous factor. Many field names here will not have descriptions, because their details are identical to those for sport instances.
 
@@ -148,7 +149,7 @@ org_address_line_2
 org_quality
 
 
-### Grants
+## Grants
 
 Grants are an important part of making an adaptive sport accessible. This database will captue information about grants so that the use can know if they are applicable to them
 
