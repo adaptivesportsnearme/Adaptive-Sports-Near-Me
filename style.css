@@ -1,0 +1,297 @@
+/* ==========================================
+   GLOBAL STYLES
+========================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: "Lexend Deca", sans-serif;
+    background: linear-gradient(
+        180deg,
+        #F7F5F8 0%,
+        #EEF1F4 100%
+    );
+    color: #1F2937;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+/* ==========================================
+   HEADER & LOGO
+========================================== */
+header {
+    background: linear-gradient(
+        180deg,
+        #5F6672 0%,
+        #7B8494 100%
+    );
+    color: white;
+    text-align: center;
+    padding: 30px 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.logo img {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    filter: drop-shadow(
+        0 8px 16px rgba(0, 0, 0, 0.15)
+    );
+}
+
+header h1 {
+    font-family: "Sigmar", sans-serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: normal;
+    color: white;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+}
+
+/* ==========================================
+   NAVIGATION
+========================================== */
+nav {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.nav-btn {
+    font-family: "Lexend Deca", sans-serif;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 999px;
+
+    padding: 10px 24px;
+
+    color: white;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 500;
+
+    cursor: pointer;
+
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    background: white;
+    color: #4B5563;
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* ==========================================
+   MAIN CONTENT
+========================================== */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 60px 24px;
+}
+
+/* ==========================================
+   HERO SECTION
+========================================== */
+.hero-section {
+    text-align: center;
+    padding: 60px 20px;
+    animation: fadeUp 0.8s ease;
+}
+
+.hero-title {
+    color: #374151;
+    font-size: clamp(2.25rem, 6vw, 4rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 20px;
+}
+
+.hero-subtitle {
+    max-width: 700px;
+    margin: 0 auto 40px;
+
+    color: #4B5563;
+    font-size: 1.15rem;
+    font-weight: 400;
+}
+
+/* ==========================================
+   HERO BUTTON
+========================================== */
+.hero-btn {
+    display: inline-block;
+
+    padding: 18px 50px;
+    border: none;
+    border-radius: 999px;
+
+    background: linear-gradient(
+        135deg,
+        #6B7280 0%,
+        #8B7288 100%
+    );
+
+    color: white !important;
+    text-decoration: none;
+
+    font-weight: 600;
+    letter-spacing: 0.5px;
+
+    box-shadow:
+        0 8px 24px rgba(107, 114, 128, 0.25);
+
+    transition: all 0.3s ease;
+}
+
+.hero-btn:hover {
+    background: linear-gradient(
+        135deg,
+        #4B5563 0%,
+        #6B7280 100%
+    );
+
+    transform: translateY(-4px);
+
+    box-shadow:
+        0 14px 35px rgba(75, 85, 99, 0.3);
+}
+
+/* ==========================================
+   HERO ICON
+========================================== */
+.hero-icon {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* ==========================================
+   CARD COMPONENT
+========================================== */
+.card {
+    background: white;
+
+    border: 1px solid #E5E7EB;
+    border-radius: 20px;
+
+    padding: 30px;
+
+    box-shadow:
+        0 8px 24px rgba(15, 23, 42, 0.06);
+
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+
+    box-shadow:
+        0 14px 32px rgba(15, 23, 42, 0.08);
+}
+
+/* ==========================================
+   SECTION HEADINGS
+========================================== */
+h2 {
+    color: #374151;
+    margin-bottom: 15px;
+}
+
+h3 {
+    color: #4B5563;
+    margin-bottom: 10px;
+}
+
+p {
+    color: #4B5563;
+}
+
+/* ==========================================
+   ANIMATIONS
+========================================== */
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-12px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================
+   RESPONSIVE DESIGN
+========================================== */
+@media (max-width: 768px) {
+    header {
+        padding: 25px 15px;
+    }
+
+    .logo img {
+        width: 120px;
+        height: 120px;
+    }
+
+    .container {
+        padding: 40px 20px;
+    }
+
+    .hero-section {
+        padding: 40px 15px;
+    }
+
+    .hero-btn {
+        padding: 16px 36px;
+    }
+
+    nav {
+        gap: 10px;
+    }
+
+    .nav-btn {
+        padding: 8px 18px;
+        font-size: 0.95rem;
+    }
+
+    .card {
+        padding: 24px;
+    }
+}
