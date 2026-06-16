@@ -1,5 +1,20 @@
 /* A module to handle parsing google calendar information */
 
+/*  Hello! This was the first module written for the ASNM project, so
+	I imagine it's likely to be one of the first to be reworked. This version of 
+	the code uses the placeholder struct tempinstance, until the instance module
+	is written. The main function is parseGoogleCalendarLink, which uses helper
+	functions parseLinkString and parseGoogleTime. The former is a percent decoder
+	and the latter is a ISO 8601 time format decoder. */
+
+// more information on Google Calendar formatting can be found here:
+// https://developers.google.com/workspace/calendar/api/concepts/inviting-attendees-to-events#link-user
+
+// although for whatever reason it omits that &ctz= also stores the timezone as of 20260616T172200 ;)
+
+// This module has been tested for memory leaks, even in the presence of broken and adversarial links
+// Its accuracy has also been vetted.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,6 +33,7 @@ struct tempinstance {
 		*zip, *city, *state, *country,
 		*address_line_1, *address_line_2, *description;
 	int start_time, end_time, start_month, start_day, start_year, end_month, end_day, end_year;
+	char * timezone;
 	int UTC_time;
 };
 
@@ -25,6 +41,7 @@ struct tempinstance {
 void freeinstance(struct tempinstance * instance) {
 	if (instance->name != NULL) free(instance->name);
 	if (instance->description != NULL) free(instance->description);
+	if (instance->timezone != NULL) free(instance->timezone);
 	free(instance);
 }
 
@@ -94,54 +111,79 @@ size_t strfindfrom(char* str, char* substr, int start) {
 	return -1;
 }
 
-// finds the date information from a link in the format YYYYMMDD
-// after YYYYMMDD there may be a time included, which is in form THHMMSS or THHMMSSZ
+// finds the date information from a string in the ISO 8601 basic date and time format
+// and passes that information into the provided arguments. If any information is in
+// an improper format, the default value of 0 will be passed.
 
-// If the Z is present, then the time is being conveyed in UTC time
-// and we will return a 1 to indicate that we need to convert to relative time
+// https://en.wikipedia.org/wiki/ISO_8601
 
 int parseGoogleTime(char* str, int* year, int* mon, int* day, int* time) {
 
 	if (strlen(str) < 8) return 0;
 
+	// a placeholder variable to prevent bad information from being passed
+	int temp;
+
 	char * parsebuffer = calloc(5, sizeof(char));
 	*(parsebuffer + 4) = '\0';
 
 	memcpy(parsebuffer, str, 4);
-	*year = atoi(parsebuffer);
+	temp = atoi(parsebuffer);
+	if (temp >= 0000 && temp <= 9999) { // verifies that year is in the ISO 8601 format
+		*year = temp;
+	}
+	
 	*(parsebuffer + 2) = '\0';
-
 	memcpy(parsebuffer, str + 4, 2);
-	*mon = atoi(parsebuffer);
+	temp = atoi(parsebuffer);
+	if (temp >= 1 && temp <= 12) {
+		*mon = temp;
+	}
 	
 	memcpy(parsebuffer, str + 6, 2);
-	*day = atoi(parsebuffer);
+	temp = atoi(parsebuffer);
+	if (temp >= 1 && temp <= 31) {
+		*day = temp;
+	}
+	
 
-	int temptime = 0;
+	int hrs = 0;
+	int min = 0;
 	int absolute = 0;
 
-	if (strlen(str) >= 17) {
+	if (strlen(str) >= 15) { // YYYYMMDDTHHMISS is length 8 + 1 + 6 = 15
 		if (*(str + 8) == 'T') {
 			memcpy(parsebuffer, str + 9, 2);
-			temptime = 60 * atoi(parsebuffer);
-
-			memcpy(parsebuffer, str + 11, 2);
-			*time = temptime + atoi(parsebuffer);
+			hrs = atoi(parsebuffer);
+			if (hrs >= 0 && hrs <= 24) {
+				memcpy(parsebuffer, str + 11, 2);
+				min = atoi(parsebuffer);
+				if (min >= 0 && min <= 59 && !(hrs == 24 & min != 0)) {
+					*time = 60 * hrs + min;
+				}
+			}
+	
+			
 		}
 
-		if (strlen(str) >= 18) {
-			if (*(str + 17) == 'Z' || *(str + 17) == 'z') {
+		if (strlen(str) >= 16) {
+			if (*(str + 16) == 'Z' || *(str + 16) == 'z') {
 				absolute = 1;
 			}
 		}
 	}
+
+	free(parsebuffer);
 	
 	return absolute;
 }
 
 
-/* Information carried by links uses a particular format, avoiding spaces in particular.
-	This function modifies the input string to convert to a more friendly format*/
+/*  Google Calendar uses URL encoding to store strings in URLs. This function takes a 
+	URL-encoded string and decodes it, modifying the original string and adjusting
+	its space in memory to accomodate. */
+
+// https://en.wikipedia.org/wiki/Percent-encoding
 
 // takes a pointer to the string as input, so that it may be modified in memory
 
@@ -160,16 +202,17 @@ void parseLinkString(char** str) {
 			
 			char hexstr[3] = {*(*str + offset + i + 1), *(*str + offset + i + 2), '\0'};
 
-			errno = 0;
-
 			int hex = (int)strtol(hexstr, NULL, 16);
 
 			// Google calendar seemingly allows any ASCII value to be passed as string data in a link
 			// so the decoding reflects this.
 
-			// If strtol fails it will set the errno to a number other than 0
-			// Otherwise it will return the value of the string as a hex value.
-			if (hex != 0 || errno == 0) {
+			// We don't have to check hex's range here, because we are converting from a 2-character
+			// hexadecimal string, which already protects from extreme values. We only check for 
+			// non-negativity. Typically, strtol would use errno to convey that 0 is the converted
+			// value. But we ABSOLUTELY don't want users putting string-terminating characters
+			// in our strings, so we just ignore this case.
+			if (hex >= 0) {
 				*(*str + i) = (char)hex;
 				offset += 2;
 			} else {
@@ -190,15 +233,12 @@ void parseLinkString(char** str) {
 	
 }
 
- // https://www.google.com/calendar/event?action=TEMPLATE&dates=20260610T173000/20260610T200000&text=Community%20Climbing%20Meet%20Up%20%7C%20Golden%2C%20CO&details=Our+local+programs+provide+multiple+opportunities+for+indoor+and+outdoor+climbing+throughout+Colorado.+We+offer+our+bi-monthly+climbing+meet+ups%2C+focused+on+building+community%2C+staying+connected+and+having+fun.+Our+monthly+meet+ups+are+designed+for+all+abilities.If+you+have+questions+about+the+event%2C+please+contact+our+National+Program+Manager%2C+Sam+Sala+at%C2%A0%3Ca+href%3D%22mailto%3Asam%40paradoxsports.org%22+target%3D%22_blank%22+rel%3D%22noopener%22+data-cke-saved-href%3D%22mailto%3Asam%40paradoxsports.org%22%3Esam%40paradoxsports.org%3C%2Fa%3E.Location%3A+Golden%2C+CO+%28exact+location+will+be+determined+by+group+accessibility+needs+and+details+will+be+emailed+prior+to+event%29.%C2%A0+%2AThis+is+an+outdoor+climbing+event.An+optional+happy+hour+in+Golden+will+take+place+following+climbing.Price%3A+Free%21%3Cstrong%3E%3Cem%3E%2ARegistration+space+is+limited.%C2%A0+Tickets+are+available+on+a+first-come%2C+first-serve+basis.%C2%A0%3C%2Fem%3E%3C%2Fstrong%3E%5Bfusion_button+link%3D%22https%3A%2F%2Fsecure.qgiv.com%2Ffor%2FMRLAK29HQWDN9CM7EBT1%2Fevent%2Fgoldenjune10%2F%22+title%3D%22%22+%28View+Full+event+Description+Here%3A+https%3A%2F%2Fwww.paradoxsports.org%2Fcalendar%2Fcommunity-climbing-meet-up-golden-co-3%2F%29&trp=false&ctz=America/Denver&sprop=website:https://www.paradoxsports.org
-
- // http://www.google.com/calendar/event?action=TEMPLATE&text=Cycling+Center+Thursday+Open+Hours&dates=20260604T190000Z/20260605T010000Z&details=Come+Ride+With+Us%21++%0D%0APlease+call+or+email+to+make+an+appointment%3A+%0D%0A510-848-2930+or+cycling%40borp.org&location=Aquatic+Park%2C80+Bolivar+Drive%2CBerkeley%2CCA%2CUnited+States+of+America+94710
-/* Given a Google calendar link, parses data into the instance. Fields that are not found are
+ /* Given a Google calendar link, parses data into the instance. Fields that are not found are
 	populated as NULL in the object. If the link is not a Google calendar link, then instance
-	will remain untouched. By default, will override fields. */
+	will remain untouched. By default, the function will override fields if a new value is found. */
 
-// If the link mixes UTC and local when storing start and end date this function will return 
-
+// If the link mixes UTC and local when storing start and end date this function will adjust UTC_time
+// based off the start date
 
 void parseGoogleCalendarLink(struct tempinstance* instance, char* link) {
 
@@ -230,7 +270,7 @@ void parseGoogleCalendarLink(struct tempinstance* instance, char* link) {
 
 	end_index = strfindfrom(link, "&", start_index + 6);
 	if (end_index == -1) {
-		end_index = strlen(link) - 1;
+		end_index = strlen(link);
 	}
 
 	if (end_index - start_index - 6 >= 0) { // only collects data if it is possible
@@ -248,7 +288,7 @@ void parseGoogleCalendarLink(struct tempinstance* instance, char* link) {
 			*(title + NAMESIZE) = '\0';
 		}
 		// frees space to overwrite instance variable
-		if (instance->name == NULL) {
+		if (instance->name != NULL) {
 			free(instance->name);
 		}
 
@@ -266,16 +306,14 @@ void parseGoogleCalendarLink(struct tempinstance* instance, char* link) {
 										    // param has length end_index - start_index - 7
 	end_index = strfindfrom(link, "&", start_index + 6);
 	if (end_index == -1) {
-		end_index = strlen(link) - 1;
+		end_index = strlen(link);
 	}
 
 	int datelen = end_index - start_index - 7;
 
-	if (datelen >= 17) {
+	if (datelen >= 17) { // 17 is the minimum time length allowed
 
 		char * date = calloc(datelen + 1, sizeof(char));
-
-		printf("datelen: %d, end_index: %ld, start_index: %ld\n", datelen, end_index, start_index);
 
 		// copies the found parameter into a new title string
 		memcpy(date, link + start_index + 7, datelen);
@@ -301,6 +339,9 @@ void parseGoogleCalendarLink(struct tempinstance* instance, char* link) {
 			// google calendar link
 			instance->UTC_time = parseGoogleTime(startdate, &(instance->start_year), &(instance->start_month), &(instance->start_day), &(instance->start_time));
 			parseGoogleTime(enddate, &(instance->end_year), &(instance->end_month), &(instance->end_day), &(instance->end_time));
+
+			free(startdate);
+			free(enddate);
 		} 
 		// it might be worth returning if we can't find a "/" here, as that necessarily invalidates the link.
 		// However, even if the date format is corrupted, it still might be worth trying to retrieve other data.
@@ -314,7 +355,7 @@ void parseGoogleCalendarLink(struct tempinstance* instance, char* link) {
 
 	if (start_index != -1) {
 		end_index = strfindfrom(link, "&", start_index + 8); // desc starts at start_index + 9
-		if (end_index == -1) end_index = strlen(link) - 1;	 // desc ends at end_index - 1
+		if (end_index == -1) end_index = strlen(link);	 // desc ends at end_index - 1
 															 // desc has length end_index - start_index - 9
 
 		if (end_index - start_index - 9 >= 0) {
@@ -356,7 +397,7 @@ void parseGoogleCalendarLink(struct tempinstance* instance, char* link) {
 
 	if (start_index != -1) {
 		end_index = strfindfrom(link, "&", start_index + 9); 
-		if (end_index == -1) end_index = strlen(link) - 1;
+		if (end_index == -1) end_index = strlen(link);
 
 		if (end_index - start_index - 10 >= 0) {
 			char* locationstring = calloc(end_index - start_index - 9, sizeof(char));
@@ -367,34 +408,53 @@ void parseGoogleCalendarLink(struct tempinstance* instance, char* link) {
 			parseLinkString(&locationstring);
 
 			// PLACEHOLDER WARNING UNTIL STRING TO LOCATION PARSING IS POSSIBLE
-			printf("WARNING! Due to a lack of a string to location parser, this link is ignoring useful information!\nPlease fix. Information lost: Location: %s\n", locationstring);
+			// printf("WARNING! Due to a lack of a string to location parser, this link is ignoring useful information!\nPlease fix. Information lost: Location: %s\n", locationstring);
 			free(locationstring);
 		}
 	}
+
+	// END OF LOCATION PARSING //
+
+	// START OF TIMEZONE PARSING //
+
+	// time zone information may be stored either in a single time zone under &ctz=
+	// or as a start and end time zone under &stz= and &etz= respectively.
+	// We will prioritize the start time zone, as few sporting events should cross time zone lines
+	// and even fewer will pass that information effectively in a calendar link.
+
+	size_t ctz_index = strfind(link, "&ctz=");
+	size_t stz_index = strfind(link, "&stz=");
+
+	if (ctz_index != -1 || stz_index != -1) {
+		if (ctz_index != -1) {
+			start_index = ctz_index; 
+		} else {
+			start_index = stz_index;
+		}
+
+		end_index = strfindfrom(link, "&", start_index + 4); 
+		if (end_index == -1) end_index = strlen(link);
+
+		if (end_index - start_index - 5 >= 0) {
+
+			char* tzstring = calloc(end_index - start_index - 4, sizeof(char));
+
+			memcpy(tzstring, link + start_index + 5, end_index - start_index - 5);
+			*(tzstring + end_index - start_index - 5) = '\0';
+
+			if (instance->timezone != NULL) free(instance->timezone);
+
+			instance->timezone = tzstring;
+
+		}
+	}
+
 }
 
 
 
 
 int main(int argc, char** argv) {
-
-	struct tempinstance * instance = calloc(1, sizeof(struct tempinstance));
-
-	parseGoogleCalendarLink(instance, "google.com/calendar/event?action=TEMPLATE&text=&dates="); // bad link!!
-
-	printf("name = %s, start month = %d, end month = %d, start year = %d, end year = %d, start day = %d, end day = %d, start time = %d, end time = %d, description = %s\n\n", instance->name, instance->start_month, instance->end_month, instance->start_year, instance->end_year, instance->start_day, instance->end_day, instance->start_time, instance->end_time, instance->description);
-	
-	parseGoogleCalendarLink(instance, "http://www.google.com/calendar/event?action=TEMPLATE&text=Cycling+Center+Thursday+Open+Hours&dates=20260604T190000Z/20260605T010000Z&details=Come+Ride+With+Us\%21++\%0D\%0APlease+call+or+email+to+make+an+appointment\%3A+\%0D\%0A510-848-2930+or+cycling\%40borp.org&location=Aquatic+Park\%2C80+Bolivar+Drive\%2CBerkeley\%2CCA\%2CUnited+States+of+America+94710");
-
-	printf("name = %s, start month = %d, end month = %d, start year = %d, end year = %d, start day = %d, end day = %d, start time = %d, end time = %d, description = %s\n\n", instance->name, instance->start_month, instance->end_month, instance->start_year, instance->end_year, instance->start_day, instance->end_day, instance->start_time, instance->end_time, instance->description);
-
-	// attempt to reparse
-
-	parseGoogleCalendarLink(instance, "https://www.google.com/calendar/event?action=TEMPLATE&dates=20260610T173000/20260610T200000&text=Community\%20Climbing\%20Meet\%20Up\%20\%7C\%20Golden\%2C\%20CO&details=Our+local+programs+provide+multiple+opportunities+for+indoor+and+outdoor+climbing+throughout+Colorado.+We+offer+our+bi-monthly+climbing+meet+ups\%2C+focused+on+building+community\%2C+staying+connected+and+having+fun.+Our+monthly+meet+ups+are+designed+for+all+abilities.If+you+have+questions+about+the+event\%2C+please+contact+our+National+Program+Manager\%2C+Sam+Sala+at\%C2\%A0\%3Ca+href\%3D\%22mailto\%3Asam\%40paradoxsports.org\%22+target\%3D\%22_blank\%22+rel\%3D\%22noopener\%22+data-cke-saved-href\%3D\%22mailto\%3Asam\%40paradoxsports.org\%22\%3Esam\%40paradoxsports.org\%3C\%2Fa\%3E.Location\%3A+Golden\%2C+CO+\%28exact+location+will+be+determined+by+group+accessibility+needs+and+details+will+be+emailed+prior+to+event\%29.\%C2\%A0+\%2AThis+is+an+outdoor+climbing+event.An+optional+happy+hour+in+Golden+will+take+place+following+climbing.Price\%3A+Free\%21\%3Cstrong\%3E\%3Cem\%3E\%2ARegistration+space+is+limited.\%C2\%A0+Tickets+are+available+on+a+first-come\%2C+first-serve+basis.\%C2\%A0\%3C\%2Fem\%3E\%3C\%2Fstrong\%3E\%5Bfusion_button+link\%3D\%22https\%3A\%2F\%2Fsecure.qgiv.com\%2Ffor\%2FMRLAK29HQWDN9CM7EBT1\%2Fevent\%2Fgoldenjune10\%2F\%22+title\%3D\%22\%22+\%28View+Full+event+Description+Here\%3A+https\%3A\%2F\%2Fwww.paradoxsports.org\%2Fcalendar\%2Fcommunity-climbing-meet-up-golden-co-3\%2F\%29&trp=false&ctz=America/Denver&sprop=website:https://www.paradoxsports.org");
-
-	printf("name = %s, start month = %d, end month = %d, start year = %d, end year = %d, start day = %d, end day = %d, start time = %d, end time = %d, description = %s\n\n", instance->name, instance->start_month, instance->end_month, instance->start_year, instance->end_year, instance->start_day, instance->end_day, instance->start_time, instance->end_time, instance->description);
-
-	freeinstance(instance);
 
 	return 0;
 }
