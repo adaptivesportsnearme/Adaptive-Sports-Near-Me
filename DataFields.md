@@ -54,7 +54,7 @@ sport_name
  - Name of the instance's sport, with the same domain of values as listed in the Sports database
 
 instance_description
- - A brief description of the sport opportunity
+ - A brief description of the sport opportunity (1023 characters)
 
 instance_zip (String)
  - Zip code of the sport opportunity's location. This must be a string to allow for international postal codes
@@ -118,6 +118,9 @@ instance_quality (double)
 
 UTC_time (int)
  - A boolean variable with value 1 if the time stored in instance_start_time/instance_end_time is in UTC. Although we will be converting to local time when storing events in the database, this is a useful value to know so we can universalize times. Additionally, if we expand to store time information in UTC, we can still use this variable.
+
+timezone (string)
+ - The TZ identifier of the time zone, as specified by the tz database. https://en.wikipedia.org/wiki/Tz_database
 
 ## Instance Sources
 
