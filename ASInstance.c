@@ -62,7 +62,7 @@
     the defined space in bytes.*/ 
 #define NAMESIZE 257
 #define DESCSIZE 1025
-#define SPORTSize 33
+#define SPORTSIZE 33
 #define ORGIDSIZE 17
 #define ZIPSIZE 9
 #define CITYSIZE 33
@@ -244,7 +244,8 @@ void ASInstanceFormatMemory(ASInstance* inst) {
 
     if (inst->name != NULL) ASInstanceTrimStringTo(&inst->name, NAMESIZE);
     if (inst->description != NULL) ASInstanceTrimStringTo(&inst->description, DESCSIZE);
-    if (inst->sport_name != NULL) ASInstanceTrimStringTo(&inst->organization_id, ORGIDSIZE);
+    if (inst->sport_name != NULL) ASInstanceTrimStringTo(&inst->sport_name, SPORTSIZE);
+    if (inst->organization_id != NULL) ASInstanceTrimStringTo(&inst->organization_id, ORGIDSIZE);
     if (inst->zip != NULL) ASInstanceTrimStringTo(&inst->zip, ZIPSIZE);
     if (inst->city != NULL) ASInstanceTrimStringTo(&inst->city, CITYSIZE);
     if (inst->state != NULL) ASInstanceTrimStringTo(&inst->state, STATESIZE);
