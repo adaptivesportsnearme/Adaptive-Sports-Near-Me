@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+firsturl = input("Enter first url: ")
 def crawl(url, visited_urls=set()):
     if url in visited_urls:
         return
@@ -14,4 +15,4 @@ def crawl(url, visited_urls=set()):
         next_url = next_page.find('a')['href']
         crawl(url+next_url, visited_urls)
 
-crawl('https://www.challengedathletes.org/articles/adaptive-sports-organizations-nationwide/')
+crawl(firsturl)

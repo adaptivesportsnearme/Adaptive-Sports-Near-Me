@@ -1,0 +1,11 @@
+Web crawling: searches for new WEBSITES
+Web scraping: searches websites for CONTENTS
+
+To run the web crawler/scraper in powershell: 
+1. Check if python is installed by [python --version]
+2. Navigate to directory containing crawler.py
+3. Run [python crawler.py]
+
+Extracted web url links populate in file: websites.txt
+
+Previously known urls containing are in urllist.txt
