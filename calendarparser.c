@@ -1,12 +1,5 @@
 /* A module to handle parsing google calendar information */
 
-/*  Hello! This was the first module written for the ASNM project, so
-	I imagine it's likely to be one of the first to be reworked. This version of 
-	the code uses the placeholder struct tempinstance, until the instance module
-	is written. The main function is parseGoogleCalendarLink, which uses helper
-	functions parseLinkString and parseGoogleTime. The former is a percent decoder
-	and the latter is a ISO 8601 time format decoder. */
-
 // more information on Google Calendar formatting can be found here:
 // https://developers.google.com/workspace/calendar/api/concepts/inviting-attendees-to-events#link-user
 
@@ -15,36 +8,9 @@
 // This module has been tested for memory leaks, even in the presence of broken and adversarial links
 // Its accuracy has also been vetted.
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
+#include "calendarparser.h"
 
-// DESCSIZE is the maximum allowed description length, with DESCSIZE - 1 characters and a null terminator.
-#define DESCSIZE 1024
-#define NAMESIZE 256
-
-
-/* In the future we will use a shared struct across code.This is just a temporary
-	struct while this module is developed */
-struct tempinstance {
-	char* name,
-		*zip, *city, *state, *country,
-		*address_line_1, *address_line_2, *description;
-	int start_time, end_time, start_month, start_day, start_year, end_month, end_day, end_year;
-	char * timezone;
-	int UTC_time;
-};
-
-// incomplete!!! do not use outside this module and delete soon!!!
-void freeinstance(struct tempinstance * instance) {
-	if (instance->name != NULL) free(instance->name);
-	if (instance->description != NULL) free(instance->description);
-	if (instance->timezone != NULL) free(instance->timezone);
-	free(instance);
-}
-
+//-------------------- Helper Functions ---------------------- //
 
 /* Given a string and a substring, returns the index of the first character of the substring upon a match,
 	or -1 if the substring is not found or either string is null. If there are multiple substring matches,
@@ -110,6 +76,9 @@ size_t strfindfrom(char* str, char* substr, int start) {
 
 	return -1;
 }
+
+//-------------------- Parsing Functions ---------------------- //
+
 
 // finds the date information from a string in the ISO 8601 basic date and time format
 // and passes that information into the provided arguments. If any information is in
@@ -237,10 +206,10 @@ void parseLinkString(char** str) {
 	populated as NULL in the object. If the link is not a Google calendar link, then instance
 	will remain untouched. By default, the function will override fields if a new value is found. */
 
-// If the link mixes UTC and local when storing start and end date this function will adjust UTC_time
+// If the link mixes UTC and local when storing start and end date this function will set UTC_time
 // based off the start date
 
-void parseGoogleCalendarLink(struct tempinstance* instance, char* link) {
+void parseGoogleCalendarLink(ASInstance* instance, char* link) {
 
 	if (link == NULL) return;
 
@@ -257,7 +226,7 @@ void parseGoogleCalendarLink(struct tempinstance* instance, char* link) {
 	}
 
 	if (instance == NULL) {
-		instance = calloc(1, sizeof(struct tempinstance));
+		instance = calloc(1, sizeof(ASInstance));
 	}
 
 	// START OF TITLE PARSING //
@@ -283,10 +252,6 @@ void parseGoogleCalendarLink(struct tempinstance* instance, char* link) {
 
 		parseLinkString(&title);
 
-		if (strlen(title) >= NAMESIZE - 1) {
-			title = realloc(title, NAMESIZE);
-			*(title + NAMESIZE) = '\0';
-		}
 		// frees space to overwrite instance variable
 		if (instance->name != NULL) {
 			free(instance->name);
@@ -359,29 +324,12 @@ void parseGoogleCalendarLink(struct tempinstance* instance, char* link) {
 															 // desc has length end_index - start_index - 9
 
 		if (end_index - start_index - 9 >= 0) {
-			int tempsize = end_index - start_index - 9;
-			/* our maximum description size (at time of writing) is 1023 (2^10 - 1). If half the characters in the 
-			description are percent-encoded, then that size 1023 will map to 2046 in the undecoded string. If the 
-			description in the link is larger, then it must be truncated as a necessary casualty of database storage 
-			being limited. Otherwise, if the decoded version would be comprised of half non-alphanumeric values, I 
-			will assume it is mostly garbage and fine to truncate. However, if space permits, you can always set the 
-			max value of tempsize to 3 times the maximum description size to allow such junk inputs. */ 
-
-			// also I am truncating here and not in title because titles will usually have shorter lengths,
-			// while I imagine descriptions could get much much longer.
-			if (tempsize > (2 * DESCSIZE - 2)) tempsize = 2 * DESCSIZE - 2;
-
-			char * details = calloc(tempsize + 1, sizeof(char));
+			char * details = calloc(end_index - start_index - 9, sizeof(char));
 			
-			memcpy(details, link + start_index + 9, tempsize);
-			*(details + tempsize) = '\0';
+			memcpy(details, link + start_index + 9, end_index - start_index - 9);
+			*(details + end_index - start_index - 9) = '\0';
 
 			parseLinkString(&details);
-
-			if(strlen(details) >= DESCSIZE - 1) {
-				details = realloc(details, DESCSIZE);
-				*(details + DESCSIZE - 1) = '\0';
-			}
 
 			if (instance->description != NULL) free(instance->description);
 			instance->description = details;
@@ -449,13 +397,211 @@ void parseGoogleCalendarLink(struct tempinstance* instance, char* link) {
 		}
 	}
 
+	// END OF TIMEZONE PARSING //
+
+	ASInstanceFormatMemory(instance);
+
 }
 
 
+/* Given a Google calendar link, parses data into the ASTime. Fields that are not found are
+	populated as NULL in the object. If the link is not a Google calendar link, then instance
+	will remain untouched. By default, the function will override fields if a new value is found. */
 
+// This is a version of parseGoogleCalendarLink modified specifically for ASTime
 
-int main(int argc, char** argv) {
+// If the link mixes UTC and local when storing start and end date this function will set UTC_time
+// based off the start date
 
-	return 0;
+void parseGoogleCalendarLinkAST(ASTime* time, char* link) {
+
+	if (link == NULL) return;
+
+	// all valid google calendar links must include
+		// "action=TEMPLATE" -> this tells the site that the link contains event information
+		// "text=" -> for the name of the event
+		// "dates=" -> for the time of the event
+
+	// if the link is invalid we will return immediately
+	if ((strfind(link, "calendar.google.com") == -1 && 
+		strfind(link, "google.com/calendar") == -1) || strfind(link, "action=TEMPLATE") == -1
+		|| strfind(link, "&text=") == -1 || strfind(link, "&dates=") == -1) {
+		return;
+	}
+
+	if (time == NULL) {
+		time = calloc(1, sizeof(ASTime));
+	}
+
+	// START OF DATE PARSING
+
+	// We know we will find an index in the string, as "&dates=" is required in the link, and 
+	// we already verified that this will not return -1
+	size_t start_index = strfind(link, "&dates="); // param starts at start_index + 7
+	        							    // param ends at end_index - 1
+										    // param has length end_index - start_index - 7
+	size_t end_index = strfindfrom(link, "&", start_index + 6);
+	if (end_index == -1) {
+		end_index = strlen(link);
+	}
+
+	int datelen = end_index - start_index - 7;
+
+	if (datelen >= 17) { // 17 is the minimum time length allowed
+
+		char * date = calloc(datelen + 1, sizeof(char));
+
+		// copies the found parameter into a new title string
+		memcpy(date, link + start_index + 7, datelen);
+		*(date + datelen) = '\0';
+
+		// gets the divider between the dates.
+		size_t split = strfind(date, "/");
+
+		if (split < end_index) {
+		
+			char * startdate = calloc(split + 1, sizeof(char));
+			char * enddate = calloc(datelen - split + 1, sizeof(char));
+
+			memcpy(startdate, date, split);
+			*(startdate + split) = '\0';
+			
+			memcpy(enddate, date + split + 1, datelen - split);
+			*(date + datelen - split) = '\0';
+
+			free(date);
+
+			// we are assuming that we are not mixing date formatting, although this technically results in a valid
+			// google calendar link
+			time->UTC_time = parseGoogleTime(startdate, &(time->start_year), &(time->start_month), &(time->start_day), &(time->start_time));
+			parseGoogleTime(enddate, &(time->end_year), &(time->end_month), &(time->end_day), &(time->end_time));
+
+			free(startdate);
+			free(enddate);
+		} 
+		// it might be worth returning if we can't find a "/" here, as that necessarily invalidates the link.
+		// However, even if the date format is corrupted, it still might be worth trying to retrieve other data.
+	}
+
+	// END OF DATE PARSING //
+
+	// START OF TIMEZONE PARSING //
+
+	// time zone information may be stored either in a single time zone under &ctz=
+	// or as a start and end time zone under &stz= and &etz= respectively.
+	// We will prioritize the start time zone, as few sporting events should cross time zone lines
+	// and even fewer will pass that information effectively in a calendar link.
+
+	size_t ctz_index = strfind(link, "&ctz=");
+	size_t stz_index = strfind(link, "&stz=");
+
+	if (ctz_index != -1 || stz_index != -1) {
+		if (ctz_index != -1) {
+			start_index = ctz_index; 
+		} else {
+			start_index = stz_index;
+		}
+
+		end_index = strfindfrom(link, "&", start_index + 4); 
+		if (end_index == -1) end_index = strlen(link);
+
+		if (end_index - start_index - 5 >= 0) {
+
+			char* tzstring = calloc(end_index - start_index - 4, sizeof(char));
+
+			memcpy(tzstring, link + start_index + 5, end_index - start_index - 5);
+			*(tzstring + end_index - start_index - 5) = '\0';
+
+			if (time->timezone != NULL) free(time->timezone);
+
+			time->timezone = tzstring;
+
+		}
+	}
+
 }
 
+/* Given a Google calendar link, parses data into the ASLocation. Fields that are not found are
+	populated as NULL in the object. If the link is not a Google calendar link, then instance
+	will remain untouched. By default, the function will override fields if a new value is found. */
+
+void parseGoogleCalendarLinkASLoc(ASLocation* location, char* link) {
+
+	if (link == NULL) return;
+
+	// all valid google calendar links must include
+		// "action=TEMPLATE" -> this tells the site that the link contains event information
+		// "text=" -> for the name of the event
+		// "dates=" -> for the time of the event
+
+	// if the link is invalid we will return immediately
+	if ((strfind(link, "calendar.google.com") == -1 && 
+		strfind(link, "google.com/calendar") == -1) || strfind(link, "action=TEMPLATE") == -1
+		|| strfind(link, "&text=") == -1 || strfind(link, "&dates=") == -1) {
+		return;
+	}
+
+	if (location == NULL) {
+		location = calloc(1, sizeof(ASLocation));
+	}
+
+	// START OF LOCATION PARSING //
+
+	size_t start_index = strfind(link, "&location=");
+	size_t end_index;
+
+	if (start_index != -1) {
+		end_index = strfindfrom(link, "&", start_index + 9); 
+		if (end_index == -1) end_index = strlen(link);
+
+		if (end_index - start_index - 10 >= 0) {
+			char* locationstring = calloc(end_index - start_index - 9, sizeof(char));
+
+			memcpy(locationstring, link + start_index + 10, end_index - start_index - 10);
+			*(locationstring + end_index - start_index - 10) = '\0';
+
+			parseLinkString(&locationstring);
+
+			// PLACEHOLDER WARNING UNTIL STRING TO LOCATION PARSING IS POSSIBLE
+			// printf("WARNING! Due to a lack of a string to location parser, this link is ignoring useful information!\nPlease fix. Information lost: Location: %s\n", locationstring);
+			free(locationstring);
+		}
+	}
+
+	// END OF LOCATION PARSING //
+
+	// START OF TIMEZONE PARSING //
+
+	// time zone information may be stored either in a single time zone under &ctz=
+	// or as a start and end time zone under &stz= and &etz= respectively.
+	// We will prioritize the start time zone, as few sporting events should cross time zone lines
+	// and even fewer will pass that information effectively in a calendar link.
+
+	size_t ctz_index = strfind(link, "&ctz=");
+	size_t stz_index = strfind(link, "&stz=");
+
+	if (ctz_index != -1 || stz_index != -1) {
+		if (ctz_index != -1) {
+			start_index = ctz_index; 
+		} else {
+			start_index = stz_index;
+		}
+
+		end_index = strfindfrom(link, "&", start_index + 4); 
+		if (end_index == -1) end_index = strlen(link);
+
+		if (end_index - start_index - 5 >= 0) {
+
+			char* tzstring = calloc(end_index - start_index - 4, sizeof(char));
+
+			memcpy(tzstring, link + start_index + 5, end_index - start_index - 5);
+			*(tzstring + end_index - start_index - 5) = '\0';
+
+			if (location->timezone != NULL) free(location->timezone);
+
+			location->timezone = tzstring;
+
+		}
+	}
+
+}
