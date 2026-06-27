@@ -190,8 +190,6 @@ void clearASLocation(ASLocation* location) {
 void ASInstanceTrimStringTo(char** string, size_t length) {
     size_t slen = strlen(*string);
 
-    printf("%lu\n", slen);
-
     if (slen > length - 1) {
         *string = realloc(*string, length * sizeof(char));
         *(*string + length - 1) = '\0';
