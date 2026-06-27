@@ -6,10 +6,10 @@ This is a listing of all types of data we need to store, with a standardized fie
 A database of login information, so that administrative actions may be securely accessed
 
 username
- - A given user’s username
+ - A given user's username
 
 encrypted_password
- - The hash value of a user’s password
+ - The hash value of a user's password
 
 ## Sports
 A database of various adaptive sports and information about them.
@@ -21,7 +21,7 @@ sport_super_type
  - The more general type of sport, also in title case. For instance, both Beep Basketball and Wheelchair Basketball would share a sport_super_type Basketball
 
 sport_category
- - A string with value “Indoor”, “Outdoor”, or “Water”
+ - A string with value "Indoor", "Outdoor", or "Water"
 
 is_paralympic
  - A Boolean with value true iff the sport is featured in the paralympics
@@ -47,11 +47,14 @@ Note that it might be best to divide this into smaller databases? But I think in
 instance_id
  - A unique identifier for a given instance
 
+instance_name
+ - The name of the instance
+
 sport_name
- - Name of the instance’s sport, with the same domain of values as listed in the Sports database
+ - Name of the instance's sport, with the same domain of values as listed in the Sports database
 
 instance_description
- - A brief description of the sport opportunity
+ - A brief description of the sport opportunity (1023 characters)
 
 instance_zip (String)
  - Zip code of the sport opportunity's location. This must be a string to allow for international postal codes
@@ -69,19 +72,27 @@ instance_address_line_2
 
 instance_country
 
-instance_start_time (short)
- - An integer representing the number of minutes past midnight at which the event begins.
+instance_timezone
+ - A string with the timezone used by the event host. For now, just use the format provided by the listing. If there is a reason to, we can standardize these later.
 
-instance_end_time (short)
+instance_start_time (int)
+ - An integer representing the number of minutes past midnight at which the event begins. All times will be stored in their relative value at the instance's timezone. For instance, an event in EST at time 18:00 UTC will be stored as 14:00 (in minutes past midnight) 
+
+instance_end_time (int)
  - An integer representing the number of minutes past midnight at which the event ends
 
-instance_month (short)
+instance_start_month (int)
 
-instance_day (short)
+instance_start_day (int)
  - The day of the month of the event. For example, April 28 has instance_day = 28
 
-instance_year (short)
+instance_start_year (int)
  - The year of the event. If a given instance does not appear to have a year listed, it should always be presumed to be the next possible instance of that date from the time of collection. 
+
+instance_end_month (int)
+instance_end_day (int)
+instance_end_year (int)
+ - It should be possible for someone to (for instance) host an overnight event, including on New Years' Eve
 
 instance_allows_beginners
 instance_allows_intermediate
@@ -99,11 +110,17 @@ instance_age_floor
 instance_age_ceil
  - With instance_age_floor, stores the age range of the instance. If both age_floor and age_ceil are null, then the instance is all-ages. If age_floor is null but age_ceil is not, then anyone up to the ceiling age may participate. If age_floor is not null, but age_ceil is, then anyone above the age floor may participate.
 
-instance_cost (double)
- - The cost of this instance in specific.
+instance_cost (int)
+ - The cost of this instance in specific. For instance, a $100 event would be stored as 10000
 
 instance_quality (double)
- - An abstract score that conveys the relative reliability that an instance’s information will be accurate to a real-life event. I’ve renamed this metric from “freshness” in the initial presentation, because I feel it’s more appropriate, and allows us to use similar metrics for organizations without loss of meaning.
+ - An abstract score that conveys the relative reliability that an instance's information will be accurate to a real-life event. I've renamed this metric from "freshness" in the initial presentation, because I feel it's more appropriate, and allows us to use similar metrics for organizations without loss of meaning.
+
+UTC_time (int)
+ - A boolean variable with value 1 if the time stored in instance_start_time/instance_end_time is in UTC. Although we will be converting to local time when storing events in the database, this is a useful value to know so we can universalize times. Additionally, if we expand to store time information in UTC, we can still use this variable.
+
+timezone (string)
+ - The TZ identifier of the time zone, as specified by the tz database. https://en.wikipedia.org/wiki/Tz_database
 
 ## Instance Sources
 
@@ -116,7 +133,7 @@ instance_site
 
 ## Organizations
 
-This database stores adaptive sports organizations. Due to Karen’s involvement, this is likely to run more towards veteran and law enforcement officer (LEO) heavy, but hopefully this will balance out. We can probably implement this later in development, as it’s not strictly necessary, but having a reliable database of organizations that are likely to aggregate listings will likely speed up the update process by an enormous factor. Many field names here will not have descriptions, because their details are identical to those for sport instances.
+This database stores adaptive sports organizations. We can probably implement this later in development, as it's not strictly necessary, but having a reliable database of organizations that are likely to aggregate listings will likely speed up the update process by an enormous factor. Many field names in the markdown will not have descriptions, because their details are identical to those for sport instances.
 
 org_id
  - A unique identifier for an organization
@@ -131,7 +148,7 @@ org_description
  - A short buffer storing a brief description of the organization
 
 org_website
- - A url to the organization’s main page
+ - A url to the organization's main page
 
 org_country
 
@@ -160,7 +177,7 @@ grant_source
  - The source that is providing the grant. Typically the name of an organization
 
 grant_type
- - Specifies what the grant pays for. “training,” “equipment,” “program,” and “general” are provided by ASNM, but more may be added if they are relevant.
+ - Specifies what the grant pays for. "training," "equipment," "program," and "general" are provided by ASNM, but more may be added if they are relevant.
 
 grant_amount_min
  - The minimum amount of the grant in cents. For instance, a $100 grant would be stored as 10000
