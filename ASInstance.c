@@ -7,30 +7,34 @@
     kind of adaptive sport for a particular skill level, for a single age range at a single 
     cost.
     
+        --- Not an ASI ---
         Example: Every Saturday at 2pm, four friends play a game of adaptive 
-        Pickleball at Oz Park, in Chicago, IL. This is not an adaptive sports 
+        pickleball at Oz Park, in Chicago, IL. This is NOT an adaptive sports 
         instance for our purposes, because it is not open --- an outside party 
         is not permitted to join, or at the very least these four friends are 
         not expecting this.
         
+        --- Not an ASI ---
         Example: The Rafael Racquet Club (San Anselmo, CA 94960) is hosting 
         an adaptive sports jamboree on 8/19/2027, where people may come for 
-        free to try out Power Soccer, Para Badminton, and Adaptive Rock 
-        climbing. This is not an adaptive sports instance, since multiple kinds 
+        free to try out power soccer, para badminton, and adaptive rock 
+        climbing. This is NOT an adaptive sports instance, since multiple kinds 
         of sports are offered. However, this general event may be split into 
         at least three adaptive sports instances, one for each kind of sport.
         
+        --- Not an ASI ---
         Example: On the 31st of this month at noon, the San Geronimo Golf 
-        Course will be hosting an Adaptive golf event for $20. Participants 
+        Course will be hosting an adaptive golf event for $20. Participants 
         will split into two groups -- one group for beginner through 
         intermediate golfers and another for intermediate through advanced 
-        golfers.  This is not an adaptive sports instance, as it contains 
+        golfers.  This is NOT an adaptive sports instance, as it contains 
         two distinct groups for different skill levels (even though both 
         are open to intermediate golfers!). However, each group represents 
         a single adaptive sports instance.
         
+        --- A valid ASI ---
         Example: On 10/31/2026 at 6pm, AS San Francisco is hosting an adaptive yoga 
-        event at Dolores Park, which is open to all ages and skill levels. This is an 
+        event at Dolores Park, which is open to all ages and skill levels. This IS an 
         adaptive sports instance!
     
     These are some good examples, but an adaptive sports instance is best defined by the 
@@ -59,7 +63,12 @@
 
 /*  A maximum length for certain strings. Note that because this uses c-style
     strings, the maximum length string stored in a variable is one less then 
-    the defined space in bytes.*/ 
+    the defined space in bytes. These values will likely be redecided later, once
+    we get an idea for a typical ASI. */ 
+
+// Remember that c-style strings require a terminating character,
+// so these should be one larger than the corresponding attribute 
+// size in the database.
 #define NAMESIZE 257
 #define DESCSIZE 1025
 #define SPORTSIZE 33
@@ -73,6 +82,9 @@
 #define TZSIZE 33
 #define REPEATSIZE 17
 
+
+
+// --------------- Adaptive Sports Instance ---------------- //
 typedef struct {
 
     // An 8-digit hexadecimal id corresponding to this unique instance
@@ -101,16 +113,22 @@ typedef struct {
 
 } ASInstance;
 
+
+// --------------- Adaptive Sports Time ---------------- //
+// It might often be useful to collect a narrow type of data 
+// without bringing in the overhead associated with using a 
+// full ASI. This is a class for collecting time data to later
+// be merged or copied into a full ASI.
+
 // Note that timezone is stored in both of the below structs. It clearly relates to time
 // but also determines location within a region, so both structs may handle it.
-
-// A smaller struct for storing only time information, to later be merged into an ASInstance.
 typedef struct {
     int start_time, end_time, start_month, start_day, start_year, end_month, end_day, end_year, UTC_time;
     char * repeat, *timezone;
 } ASTime;
 
 
+// --------------- Adaptive Sports Location ---------------- //
 // A smaller struct for storing only location information, to later be merged into an ASInstance.
 typedef struct {
     char *zip, *city, *state, *country,
@@ -118,6 +136,12 @@ typedef struct {
     char * timezone;
 } ASLocation;
 
+
+
+// -------------------- Print Functions -------------------- //
+// A family of functions for printing the information stored in
+// the structs specified earlier. These take up multiple lines
+// and are best used for debugging. 
 
 
 // prints all fields of a given ASInstance
@@ -159,6 +183,10 @@ void printASLocation(ASLocation* location) {
 
 
 
+// -------------------- Clear Functions -------------------- //
+// Functions to clear dynamically allocated memory stored in a given
+// instance. Very helpful to use before freeing an instance.
+
 // Takes a pointer to an ASInstance as input, and frees all dynamically
 // allocated memory associated within the instance
 void clearASInstance(ASInstance *inst) {
@@ -167,7 +195,8 @@ void clearASInstance(ASInstance *inst) {
 
     if (inst->name != NULL) free(inst->name);
     if (inst->description != NULL) free(inst->description);
-    if (inst->sport_name != NULL) free(inst->organization_id);
+    if (inst->sport_name != NULL) free(inst->sport_name);
+    if (inst->organization_id != NULL) free(inst->organization_id);
     if (inst->zip != NULL) free(inst->zip);
     if (inst->city != NULL) free(inst->city);
     if (inst->state != NULL) free(inst->state);
@@ -208,7 +237,10 @@ void clearASLocation(ASLocation* location) {
 
 
 
-/* A function that takes a string and length as input.
+// -------------------- Helper Functions -------------------- //
+// Functions for internal use within this module. 
+
+/* A function that takes a pointer to a string and length as input.
    If the string is longer than the specified length minus one it is
    trimmed within this range. Otherwise, it is trimmed after
    the null character. 
@@ -224,21 +256,24 @@ void ASInstanceTrimStringTo(char** string, size_t length) {
     }
 }
 
+
 // Returns a reference to a new character buffer with the same content as the input string
 char* ASInstanceCopyString(char* str) {
     char * retstr = calloc(strlen(str) + 1, sizeof(char));
 
-    memcpy(retstr, str, strlen(str));
+    memcpy(retstr, str, strlen(str)); // calloc guarantees a '\0'
     return retstr;
 }
+
+
+// ---------------- Naive Data Cleaning -------------------- //
+// Ensures that dynamically allocated data stored in an ASI is
+// within the specified space limits.
 
 // Formats all dynamic fields to within their specified memory limits
 void ASInstanceFormatMemory(ASInstance* inst) {
 
-    printf("%p\n", inst);
-
     if (inst == NULL) {
-        printf("bad\n");
         return;
     };
 
@@ -257,6 +292,10 @@ void ASInstanceFormatMemory(ASInstance* inst) {
 }
 
 
+
+// -------------------- Merge Functions -------------------- //
+// Functions to move data from one object to another. Merging is
+// less rigid than copying because it never overwrites data.
 
 /*  Takes two ASInstances as input. If inst2 has a value in any field
     where inst1 has a default value, inst1 will be given the value
@@ -297,6 +336,26 @@ void mergeASInstance(ASInstance *inst1, ASInstance *inst2) {
     if (inst1->age_floor == 0 && inst2->age_floor != 0) inst1->age_floor = inst2->age_floor;
 }
 
+
+// Note that there are no functions to merge one ASTime to another, or
+// one ASLocation to another. If you'd like to do:
+
+/*      mergeASTimeToASTime(time1, time2);
+        mergeASTime(inst, time1);
+
+    You can instead
+
+        mergeASTime(inst, time1);
+        mergeASTime(inst, time2);
+
+    If you'd instead like to copy the merged times, simply do
+
+        copyASTime(inst, time1);
+        mergeASTime(inst, time1);
+
+*/
+
+
 // Modifies inst such that for any time field where the ASInstance has
 // a default value and the ASTime has a non-default value, inst will
 // copy ASTime's value for that field.
@@ -331,6 +390,7 @@ void mergeASLocation(ASInstance * inst, ASLocation * location) {
 }
 
 
+// -------------------- Copy Functions -------------------- //
 
 // Gives all time fields stored in inst the values of the ASTime provided.
 // This function is distinct from merge in that the ASTime will override 
@@ -358,7 +418,7 @@ void copyASTime(ASInstance * inst, ASTime * time) {
 // Gives all location fields stored in inst the values of the ASLocation provided.
 // This function is distinct from merge in that the ASLocation will override 
 // all location values in inst. Any dynamically allocated location variables in inst
-// will be freed if they have a value
+// will be freed if they have a value.
 void copyASLocation(ASInstance * inst, ASLocation * location) {
 
     if (inst->zip != NULL) free(inst->zip);
@@ -376,6 +436,9 @@ void copyASLocation(ASInstance * inst, ASLocation * location) {
     if (inst->timezone != NULL) free(inst->timezone);
     if (location->timezone != NULL) inst->timezone = ASInstanceCopyString(location->timezone);
 }
+
+
+
 
 int main(int argc, char ** argv) {
 
