@@ -56,11 +56,6 @@
     various functions to help with handling it.*/
 
 
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 /*  A maximum length for certain strings. Note that because this uses c-style
     strings, the maximum length string stored in a variable is one less then 
     the defined space in bytes. These values will likely be redecided later, once
@@ -82,60 +77,7 @@
 #define TZSIZE 33
 #define REPEATSIZE 17
 
-
-
-// --------------- Adaptive Sports Instance ---------------- //
-typedef struct {
-
-    // An 8-digit hexadecimal id corresponding to this unique instance
-    int id;
-
-    // String buffers for the title and description of a given event
-    char* name, *description;
-
-    // Attributes that are keys in other databases
-    char *sport_name, *organization_id;
-
-    // Address Information
-	char *zip, *city, *state, *country,
-		*address_line_1, *address_line_2;
-
-    // time information
-	int start_time, end_time, start_month, start_day, start_year, end_month, end_day, end_year;
-	char * timezone, *repeat;
-
-    // booleans
-	int UTC_time, allows_beginners, allows_intermediate, allows_advanced;
-
-    // numerical data about the instance
-    int age_floor, age_ceil;
-    int cost;
-
-} ASInstance;
-
-
-// --------------- Adaptive Sports Time ---------------- //
-// It might often be useful to collect a narrow type of data 
-// without bringing in the overhead associated with using a 
-// full ASI. This is a class for collecting time data to later
-// be merged or copied into a full ASI.
-
-// Note that timezone is stored in both of the below structs. It clearly relates to time
-// but also determines location within a region, so both structs may handle it.
-typedef struct {
-    int start_time, end_time, start_month, start_day, start_year, end_month, end_day, end_year, UTC_time;
-    char * repeat, *timezone;
-} ASTime;
-
-
-// --------------- Adaptive Sports Location ---------------- //
-// A smaller struct for storing only location information, to later be merged into an ASInstance.
-typedef struct {
-    char *zip, *city, *state, *country,
-		*address_line_1, *address_line_2;
-    char * timezone;
-} ASLocation;
-
+#include "ASInstance.h"
 
 
 // -------------------- Print Functions -------------------- //
@@ -297,43 +239,43 @@ void ASInstanceFormatMemory(ASInstance* inst) {
 // Functions to move data from one object to another. Merging is
 // less rigid than copying because it never overwrites data.
 
-/*  Takes two ASInstances as input. If inst2 has a value in any field
-    where inst1 has a default value, inst1 will be given the value
-    of inst2's field. Note that this gives inst1 priority when
+/*  Takes two ASInstances as input. If src has a value in any field
+    where dest has a default value, dest will be given the value
+    of src's field. Note that this gives dest priority when
     both instances have non-default values, so use caution! Dynamic 
     values are copied into a new memory block to avoid unintentional 
     frees. */
-void mergeASInstance(ASInstance *inst1, ASInstance *inst2) {
-    if (inst1->name == NULL && inst2->name != NULL) inst1->name = ASInstanceCopyString(inst2->name);
-    if (inst1->description == NULL && inst2->description != NULL) inst1->description = ASInstanceCopyString(inst2->description);
-    if (inst1->sport_name == NULL && inst2->sport_name != NULL) inst1->sport_name = ASInstanceCopyString(inst2->sport_name);
-    if (inst1->organization_id == NULL && inst2->organization_id != NULL) inst1->organization_id = ASInstanceCopyString(inst2->organization_id);
-    if (inst1->zip == NULL && inst2->zip != NULL) inst1->zip = ASInstanceCopyString(inst2->zip);
-    if (inst1->city == NULL && inst2->city != NULL) inst1->city = ASInstanceCopyString(inst2->city);
-    if (inst1->state == NULL && inst2->state != NULL) inst1->state = ASInstanceCopyString(inst2->state);
-    if (inst1->country == NULL && inst2->country != NULL) inst1->country = ASInstanceCopyString(inst2->country);
-    if (inst1->address_line_1 == NULL && inst2->address_line_1 != NULL) inst1->address_line_1 = ASInstanceCopyString(inst2->address_line_1);
-    if (inst1->address_line_2 == NULL && inst2->address_line_2 != NULL) inst1->address_line_2 = ASInstanceCopyString(inst2->address_line_2);
-    if (inst1->repeat == NULL && inst2->repeat != NULL) inst1->repeat = ASInstanceCopyString(inst2->repeat);
-    if (inst1->timezone == NULL && inst2->timezone != NULL) inst1->timezone = ASInstanceCopyString(inst2->timezone);
+void mergeASInstance(ASInstance *dest, ASInstance *src) {
+    if (dest->name == NULL && src->name != NULL) dest->name = ASInstanceCopyString(src->name);
+    if (dest->description == NULL && src->description != NULL) dest->description = ASInstanceCopyString(src->description);
+    if (dest->sport_name == NULL && src->sport_name != NULL) dest->sport_name = ASInstanceCopyString(src->sport_name);
+    if (dest->organization_id == NULL && src->organization_id != NULL) dest->organization_id = ASInstanceCopyString(src->organization_id);
+    if (dest->zip == NULL && src->zip != NULL) dest->zip = ASInstanceCopyString(src->zip);
+    if (dest->city == NULL && src->city != NULL) dest->city = ASInstanceCopyString(src->city);
+    if (dest->state == NULL && src->state != NULL) dest->state = ASInstanceCopyString(src->state);
+    if (dest->country == NULL && src->country != NULL) dest->country = ASInstanceCopyString(src->country);
+    if (dest->address_line_1 == NULL && src->address_line_1 != NULL) dest->address_line_1 = ASInstanceCopyString(src->address_line_1);
+    if (dest->address_line_2 == NULL && src->address_line_2 != NULL) dest->address_line_2 = ASInstanceCopyString(src->address_line_2);
+    if (dest->repeat == NULL && src->repeat != NULL) dest->repeat = ASInstanceCopyString(src->repeat);
+    if (dest->timezone == NULL && src->timezone != NULL) dest->timezone = ASInstanceCopyString(src->timezone);
 
-    if (inst1->start_day == 0 && inst2->start_day != 0) inst1->start_day = inst2->start_day;
-    if (inst1->start_month == 0 && inst2->start_month != 0) inst1->start_month = inst2->start_month;
-    if (inst1->start_year == 0 && inst2->start_year != 0) inst1->start_year = inst2->start_year;
-    if (inst1->start_time == 0 && inst2->start_time != 0) inst1->start_time = inst2->start_time;
+    if (dest->start_day == 0 && src->start_day != 0) dest->start_day = src->start_day;
+    if (dest->start_month == 0 && src->start_month != 0) dest->start_month = src->start_month;
+    if (dest->start_year == 0 && src->start_year != 0) dest->start_year = src->start_year;
+    if (dest->start_time == 0 && src->start_time != 0) dest->start_time = src->start_time;
 
-    if (inst1->end_day == 0 && inst2->end_day != 0) inst1->end_day = inst2->end_day;
-    if (inst1->end_month == 0 && inst2->end_month != 0) inst1->end_month = inst2->end_month;
-    if (inst1->end_year == 0 && inst2->end_year != 0) inst1->end_year = inst2->end_year;
-    if (inst1->end_time == 0 && inst2->end_time != 0) inst1->end_time = inst2->end_time;
+    if (dest->end_day == 0 && src->end_day != 0) dest->end_day = src->end_day;
+    if (dest->end_month == 0 && src->end_month != 0) dest->end_month = src->end_month;
+    if (dest->end_year == 0 && src->end_year != 0) dest->end_year = src->end_year;
+    if (dest->end_time == 0 && src->end_time != 0) dest->end_time = src->end_time;
 
-    if (inst1->UTC_time == 0 && inst2->UTC_time != 0) inst1->UTC_time = inst2->UTC_time;
-    if (inst1->allows_advanced == 0 && inst2->allows_advanced != 0) inst1->allows_advanced = inst2->allows_advanced;
-    if (inst1->allows_beginners == 0 && inst2->allows_beginners != 0) inst1->allows_beginners = inst2->allows_beginners;
-    if (inst1->allows_intermediate == 0 && inst2->allows_intermediate != 0) inst1->allows_intermediate = inst2->allows_intermediate;
-    if (inst1->cost == 0 && inst2->cost != 0) inst1->cost = inst2->cost;
-    if (inst1->age_ceil == 0 && inst2->age_ceil != 0) inst1->age_ceil = inst2->age_ceil;
-    if (inst1->age_floor == 0 && inst2->age_floor != 0) inst1->age_floor = inst2->age_floor;
+    if (dest->UTC_time == 0 && src->UTC_time != 0) dest->UTC_time = src->UTC_time;
+    if (dest->allows_advanced == 0 && src->allows_advanced != 0) dest->allows_advanced = src->allows_advanced;
+    if (dest->allows_beginners == 0 && src->allows_beginners != 0) dest->allows_beginners = src->allows_beginners;
+    if (dest->allows_intermediate == 0 && src->allows_intermediate != 0) dest->allows_intermediate = src->allows_intermediate;
+    if (dest->cost == 0 && src->cost != 0) dest->cost = src->cost;
+    if (dest->age_ceil == 0 && src->age_ceil != 0) dest->age_ceil = src->age_ceil;
+    if (dest->age_floor == 0 && src->age_floor != 0) dest->age_floor = src->age_floor;
 }
 
 
@@ -392,6 +334,48 @@ void mergeASLocation(ASInstance * inst, ASLocation * location) {
 
 // -------------------- Copy Functions -------------------- //
 
+// Copies all data from src into dest, deleting any data stored in 
+// dest
+void copyASInstance(ASInstance* dest, ASInstance* src) {
+    clearASInstance(dest);
+
+    dest->id = src->id;
+
+    if (src->name != NULL) dest->name = ASInstanceCopyString(src->name);
+    if (src->description != NULL) dest->description = ASInstanceCopyString(src->description);
+    if (src->sport_name != NULL) dest->sport_name = ASInstanceCopyString(src->sport_name);
+    if (src->organization_id != NULL) dest->organization_id = ASInstanceCopyString(src->organization_id);
+    if (src->zip != NULL) dest->zip = ASInstanceCopyString(src->zip);
+    if (src->city != NULL) dest->city = ASInstanceCopyString(src->city);
+    if (src->state != NULL) dest->state = ASInstanceCopyString(src->state);
+    if (src->country != NULL) dest->country = ASInstanceCopyString(src->country);
+    if (src->address_line_1 != NULL) dest->address_line_1 = ASInstanceCopyString(src->address_line_1);
+    if (src->address_line_2 != NULL) dest->address_line_2 = ASInstanceCopyString(src->address_line_2);
+    if (src->timezone != NULL) dest->timezone = ASInstanceCopyString(src->timezone);
+    if (src->repeat != NULL) dest->repeat = ASInstanceCopyString(src->repeat);
+
+    dest->start_day = src->start_day;
+    dest->start_month = src->start_month;
+    dest->start_year = src->start_year;
+    dest->start_time = src->start_time;
+
+    dest->end_day = src->end_day;
+    dest->end_month = src->end_month;
+    dest->end_year = src->end_year;
+    dest->end_time = src->end_time;
+
+    dest->UTC_time = src->UTC_time;
+    dest->allows_beginners = src->allows_beginners;
+    dest->allows_intermediate = src->allows_intermediate;
+    dest->allows_advanced = src->allows_advanced;
+
+    dest->cost = src->cost;
+    dest->age_floor = src->age_floor;
+    dest->age_ceil = src->age_ceil;
+    
+
+}
+
 // Gives all time fields stored in inst the values of the ASTime provided.
 // This function is distinct from merge in that the ASTime will override 
 // all time values in inst Any dynamically allocated time variables in inst
@@ -435,12 +419,4 @@ void copyASLocation(ASInstance * inst, ASLocation * location) {
     if (location->address_line_2 != NULL) inst->address_line_2 = ASInstanceCopyString(location->address_line_2);
     if (inst->timezone != NULL) free(inst->timezone);
     if (location->timezone != NULL) inst->timezone = ASInstanceCopyString(location->timezone);
-}
-
-
-
-
-int main(int argc, char ** argv) {
-
-    return 0;
 }
