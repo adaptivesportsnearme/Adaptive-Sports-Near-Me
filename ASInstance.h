@@ -177,7 +177,7 @@ void ASInstanceFormatMemory(ASInstance* inst);
     gives inst1 priority when both instances have non-default values, 
     so use caution! Dynamic values are copied into a new memory block 
     to avoid unintentional frees. */
-void mergeASInstance(ASInstance *inst1, ASInstance *inst2);
+void mergeASInstance(ASInstance *dest, ASInstance *src);
 
 /* Note that there are no functions to merge one ASTime to another, or
    one ASLocation to another. If you'd like to do:
@@ -215,7 +215,7 @@ void mergeASLocation(ASInstance * inst, ASLocation * location);
 /* Copies all data from inst2 into inst1, deleting any data stored in 
    inst1
 */
-void copyASInstance(ASInstance* inst1, ASInstance* inst2);
+void copyASInstance(ASInstance* dest, ASInstance* src);
 
 /* Gives all time fields stored in inst the values of the ASTime provided.
    This function is distinct from merge in that the ASTime will override 
