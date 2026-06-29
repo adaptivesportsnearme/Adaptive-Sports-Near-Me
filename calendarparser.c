@@ -324,7 +324,7 @@ void parseGoogleCalendarLink(ASInstance* instance, char* link) {
 															 // desc has length end_index - start_index - 9
 
 		if (end_index - start_index - 9 >= 0) {
-			char * details = calloc(end_index - start_index - 9, sizeof(char));
+			char * details = calloc(end_index - start_index - 8, sizeof(char));
 			
 			memcpy(details, link + start_index + 9, end_index - start_index - 9);
 			*(details + end_index - start_index - 9) = '\0';
