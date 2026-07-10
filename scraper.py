@@ -1,25 +1,15 @@
 import requests
 from bs4 import BeautifulSoup
-import pandas as pd
-file_path = 'websites.txt'
-line_to_delete = 1 #Going for first line in website list
 
-with open(file_path,'r') as file:
-    first_line = file.readline().strip()
+#Gets information from txt file
+with open('handoff.txt', 'r') as file:
+    for line in file:
+        url = line
 
-url = first_line
+# Extract most likely useful information
 response = requests.get(url)
-soup = BeautifulSoup(response.text, 'html.parser')
-for script_or_style in soup(['script','style']):
-    script_or_style.decompose()
-all_text = soup.get_tezxt(sparator='\n')
-cleaned_lines = [line.strip() for line in all_text.splitlines() if line.strip()]
-final_output = '\n'.join(cleaned_lines)
-print(final_output) # This will be modified to get data we want, used just for testing purposes for the moment
-
-with open("file.txt", "r+") as file:
-    file.readline()
-    remaining_data = file.read()
-    file.seek(0)
-    file.write(remaining_data)
-    file.truncate()
+html_content = response.text
+soup = BeautifulSoup(html_content, 'html.parser')
+potential=soup.find_all('p')
+for p in potential:
+    print(p)
