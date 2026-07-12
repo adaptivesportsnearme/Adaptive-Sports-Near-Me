@@ -11,46 +11,49 @@
         <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@100..900&family=Sigmar&display=swap" rel="stylesheet">
         <link rel="icon" type="image/x-icon" href="../img/asnm.jpg">
         <link rel="stylesheet" href="../style.css">
-        <title>Adaptive Sports Near Me</title>
+        <title>Search</title>
       </head>
       <body>
 
-<header>
-    
+<header class="navbar">
+        <div class="logo" >Adaptive Sports Near Me
 
-    <h1>Adaptive Sports Near Me</h1>
-
-    <nav>
-        <a href="../index.html" class="nav-btn">Home</a>
-        <a href="" class="nav-btn">Search</a>
-        <a href="../about/index.html" class="nav-btn">About</a>
-        <div class="logo">
-        <img src="../img/asnm.jpg" alt="Logo">
         </div>
-    </nav>
+
+        <nav>
+            <a href="../index.html">Home</a>
+            <a hred="./index.html">Search</a>
+            <a href="../about/index.html">About</a>
+            <a href="#">Contact</a>
+            <button class="nav-btn">List Your Program</button>
+
+        </nav>
 </header>
 
-<main class="container">
+<main class="hero">
 
     
 
-    <div class="search-wrapper">
+    <div class="hero-content">
 
-        <div class="card search-card">
+        <div class="search-area">
 
-            <h2>Search</h2>
+            <h2>Explore our Database</h2>
 
             <form class="search-form">
                 <input
                     type="text"
                     class="search-input"
-                    placeholder="Enter your search term..."
+                    placeholder="Enter specifications..."
                 >
+                <select name="" id="">
+                    <option value="1">🔍 </option>
+                </select>
 
                 <button
                     type="submit"
                     class="search-btn">
-                    Search
+                    Show Me Programs
                 </button>
             </form>
 
@@ -58,28 +61,32 @@
 
         <div class="results">
 
-            <div class="card result-item">
-                <h3>Example Search Result</h3>
+            <div class="sport-card">
+                
+                <h3>Instance Name</h3>
+                <h4>Sport Name</h4>
 
-                <a href="#" class="result-link">
-                    https://example.com/sport
-                </a>
+                <a>Sport SuperType, Sport Disability, Age Group, -tag Sport Category,</a>
 
-                <p>
-                    This is an example, this page is not yet actually dynamic (that's this week's goal for me)
-                </p>
+                <h5>Instance Description with a whole bunch of stuff oh wow look at how much stuff is here this is litereally just me filling space so I can see how much text I can actually fit into this box without it looking crazy, wow hey look at that</h5>
+                <a>Instance time and location information</a>
+                <h6>Skill Level, Equipment Bool, Equpiment Cost</h6>
+                <a>Organization</a>
+                <h6 href="#">Website link</h6>
+
             </div>
 
-            <div class="card result-item">
-                <h3>Another Result</h3>
+            <div class="sport-card">
+                <h3>Troy Youth Wheelchair Basketball League</h3>
+                <h4>Wheelchair Basketball</h4>
 
-                <a href="#" class="result-link">
-                    https://example.com/resource
-                </a>
+                <a>Basketball, Wheelchair Use, Ages: 10-14, Indoor</a>
 
-                <p>
-                   These cards will be expandable, and can easily be made to contain all necessary info
-                </p>
+                <h5>Troy Youth Wheelchair Basketball League is exactly what it sounds like, wowzies</h5>
+                <a>06/07/26 - 9/09/26, Mondays and Fridays, 123 place place Troy NY</a>
+                <h6>All skill levels welcome, No Equipment Needed, No Membership Cost</h6>
+                <a>Troy Adaptive Sports Group</a>
+                <h6 href="#">Troy Youth Weelchair Basketball League Site</h6>
             </div>
 
         </div>
