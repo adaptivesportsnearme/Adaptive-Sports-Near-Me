@@ -11,10 +11,14 @@
 #include "ASInstance.h"
 
 // functions for testing -- delete later
-int matchZip(char** arr, int index, int size);
-int splitString(char*** dst, char * str);
-int matchStateStrong(char ** arr, int index, int size);
-char * getCanonicalState(char ** arr, int index, int num);
+// int matchZip(char** arr, int index, int size);
+// int splitString(char*** dst, char * str);
+// int matchStateStrong(char ** arr, int index, int size);
+// char * getCanonicalState(char ** arr, int index, int num);
+// char * getCanonicalZip(char** arr, int index, int num);
+// int matchAddress(char ** arr, int index, int size);
+// int matchCountry(char ** arr, int index, int size);
+// char * strBuildFromArr(char* str, int start_index, int len);
 
 /*  Takes a string as input and returns a new string with the first
     US/CA postal code in the string, or NULL if no postal code is found.
@@ -90,7 +94,7 @@ char * getAddressLine2(char * string);
     location of an event, and contain little else. Strings containing irrelevant
     information or lacking necessary location information may cause 
     erroneous information to be returned.*/
-void parseLocationASLoc(ASLocation * location, char * string);
+void parseLocationASLoc(ASLocation * location, char * str);
 
 /*  Takes a string as input and populates the provided ASInstance with the
     location information the string contains. Unknown fields do not overwrite
