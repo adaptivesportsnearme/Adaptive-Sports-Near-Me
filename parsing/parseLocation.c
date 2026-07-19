@@ -24,14 +24,14 @@
 */
 
 /* 
-    In multiple places within this code, the term multistate is used.
-    Multistate denotes a state, territory, or province and contains spaces
+    In multiple places within this code, the term multistate (or multicity) is used.
+    A multistate denotes a state, territory, or province and contains spaces
 
     For instance "New Jersey", "District of Columbia", and "Northwest Territories" 
     are all multistates, but "Alabama", "DC", and "NT" are not, even though
     "DC" and "NT" refer to the above states that use spaces. The reason for this
     discrepancy is that this is a programming-related label that will not be used outside
-    of this module's internal workings.
+    of this module's internal implementation.
 */
 
 
@@ -112,7 +112,7 @@ int strIsDigit(char * str) {
 // which start at start_index
 char * strBuildFromArr(char* str, int start_index, int len) {
     
-    if (str == NULL) return 0;
+    if (str == NULL) return NULL;
 
     // an integer corresponding to an index in splitString(str)
     int index = 0;
@@ -177,6 +177,73 @@ char * strBuildFromArr(char* str, int start_index, int len) {
 
 
     return ret;
+    
+}
+
+// Given a splitString array and its corresponding string, returns the index that is the
+// first after a newline or comma. An example of output depending on input index is given below
+/*        2   2   4    4     6   6      8      8
+        "This is, a string, with a \nnewline break",
+*/
+int getNextBreakInArr(char* str, int start_index, int size) {
+    
+    if (str == NULL) return -1;
+
+    // an integer corresponding to an index in splitString(str)
+    int index = 0;
+    
+    // the start of our substring
+    int letter = 0;
+
+    // advances start to the index of the first non-space character in the string.
+    while (letter < strlen(str) && (isspace(*(str + letter)) || *(str + letter) == ',')) {
+        letter++;
+    }
+
+    if (letter == strlen(str)) return -1; // returns if passed a string with only spaces and commas
+
+    // keeps track of if the previous character was a space or comma
+    int lastwasspace = 0;
+
+    while (index < start_index) {
+        letter++;
+        if (letter >= strlen(str)) return -1; // return if out of range
+        if (isspace(*(str + letter)) || *(str + letter) == ',') {
+            lastwasspace = 1;
+        } else {
+            if (lastwasspace == 1) {
+                index++;
+            }
+            lastwasspace = 0;
+        }
+    }
+
+    // letter is now at the start of our desired substring, and index = letter
+    // we now find the next index after a newline or comma
+
+    // note that index here will change on the shift to whitespace instead of the
+    // reverse shift. This is so we don't include unnecessary spaces or commas
+
+    while (index < size) {
+        letter++;
+        if (letter >= strlen(str)) {
+            if (index == size - 1) return size;
+            return -1;
+        }
+        if (isspace(*(str + letter)) || *(str + letter) == ',') {
+            if (lastwasspace == 0) {
+                index++;
+            }
+            if (*(str + letter) == ',' || *(str + letter) == '\n') { // return index if we see a comma or newline
+                return index;
+            }
+            lastwasspace = 1;
+        } else {
+            lastwasspace = 0;
+        }
+    }
+
+    return index;
     
 }
 
@@ -380,6 +447,37 @@ int matchAddress(char ** arr, int index, int size) {
     }
 
     return 0;
+}
+
+// if there is a series of segments that are a major US/CA city, we return
+// the size of the largest series starting at index in arr. If the segment
+// does not match, we return 0.
+// because some cities like Buffalo are contained in other cities like Wood Buffalo
+// scanning from R->L can return an early result, so use caution and prefer L-> scans
+int matchCommonCity(char ** arr, int index, int size) {
+    char * multi;
+    if (index <= size - 3) {
+        if (strInArr(*(arr + index), (char**)multiCityThreeCues, PARLOCMULTTHRCITYCUES)) {
+            multi = strCombineSpace(arr, index, 3);
+            if (strInArr(multi, (char**)commonCities, PARLOCCITIES)) {
+                free(multi);
+                return 3;
+            }
+        }
+    }
+    if (index <= size - 2) {
+        if (strInArr(*(arr + index), (char**)multiCityThreeCues, PARLOCMULTWOCITYCUES)) {
+            multi = strCombineSpace(arr, index, 2);
+            if (strInArr(multi, (char**)commonCities, PARLOCCITIES)) {
+                free(multi);
+                return 2;
+            }
+        }
+    }
+
+    if (strInArr(*(arr + index), (char**)commonCities, PARLOCCITIES)) {
+        return 1;
+    }
 }
 
 // if there is a series of segments in a valid city name format, we return
@@ -650,6 +748,17 @@ int splitString(char*** dst, char * str) {
         - A single field is usually not split by a newline
 
 */
+
+
+
+
+/*
+    Improvements -> always assumes city starts after suffix
+    Improve city match with common cities list or common prefixes (San, Saint, Fort)
+    Do better way of finding address maybe
+    Use line breaks for field splitting -> as other boundary
+*/
+
 
 
 // taking a string as input, parses a location into the appropriate fields
