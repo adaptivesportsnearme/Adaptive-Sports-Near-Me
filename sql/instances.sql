@@ -1,8 +1,8 @@
--- Table: public.ASNM-Instances
+-- Table: public.asnminstances
 
--- DROP TABLE IF EXISTS public."ASNM-Instances";
+-- DROP TABLE IF EXISTS public."asnminstances";
 
-CREATE TABLE IF NOT EXISTS public."ASNM-Instances"
+CREATE TABLE IF NOT EXISTS public."asnminstances"
 (
     instance_id character(10) COLLATE pg_catalog."default" NOT NULL,
     instance_name character(50) COLLATE pg_catalog."default",

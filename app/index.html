@@ -1,3 +1,10 @@
+<?php
+$conn = pg_connect("host=localhost dbname=ASNM user=postgres password=Dorsal24");
+
+$query = "SELECT * FROM instance ORDER BY sport_name, instance_name";
+$result = pg_query($conn, $query);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
