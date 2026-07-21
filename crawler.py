@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 #"Bad" links are those we know do not have any need for the project, will update to keep it in a txt file for simplicity's sake
-bad_links = ["www.donordrive.com"]
+bad_links = ["www.donordrive.com", "www.eosfitness.com", "www.youtube.com", "eosfitness.com", "www.ossur.com"]
 #Max_depth is kept for testing purposes, do not want the crawler to get out of hand yet.
 class SimpleWebCrawler:
     def __init__(self, start_url, max_depth=2):
@@ -28,6 +28,7 @@ class SimpleWebCrawler:
             return
 
         print(f"[{current_depth}] Crawling: {current_url}")
+
         self.visited_urls.add(current_url)
         with open("handoff.txt","a") as file:
             file.write(f"{current_url}\n")
@@ -35,10 +36,14 @@ class SimpleWebCrawler:
         try:
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
             response = requests.get(current_url, headers=headers, timeout=5)
-            
+            response.raise_for_status()
+            print(f"Raw response: {response.text}")
+            data = response.json()
+            print(data)
             if response.status_code != 200:
                 return
-
+            
+            
             soup = BeautifulSoup(response.text, 'html.parser')
             
             # Find all hyperlinks
