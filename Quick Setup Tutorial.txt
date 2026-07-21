@@ -1,0 +1,10 @@
+Step 1. Download and install xampp for your operating system (windows Linux or mac)
+Step 2. Download and install PostgreSQL for your operating system
+Step 3. Open PgAdmin, Make a new server (or if one auto creates upon boot) and set the host to localhost and the password to blank (security isn't super important here since it's not public)
+Step 4. Copy the SQL files from this repo, and in PostgreSQL run them in order to create the databases on your machine
+Step 5. In XAMPP, edit the php.ini file in order to enable PostgreSQL usage
+Step 6. Copy the data from the "app" folder, and put it into the htdocs folder in the XAMPP install location
+Step 7. In XAMPP, start the apache server.
+Step 8. In your web browser of choice, type in the address bar "localhost/app/index.html" Then go to the search page, assuming that everything is working correctly you should see all of the data that is currently in the database.
+
+This should get it all working, especially if you give it to an agent to help with the process, keep in mind that at this exact moment there isn't any data in the database as I haven't committed it yet, but it will, at the least, get your xampp and postgres running

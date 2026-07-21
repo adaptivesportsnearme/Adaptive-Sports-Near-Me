@@ -22,7 +22,7 @@
 
         <nav>
             <a href="../index.html">Home</a>
-            <a hred="./index.html">Search</a>
+            <a hred="./index.php">Search</a>
             <a href="../about/index.html">About</a>
             <a href="#">Contact</a>
             <button class="nav-btn">List Your Program</button>

@@ -1,10 +1,3 @@
-<?php
-$conn = pg_connect("host=localhost dbname=ASNM user=postgres password=Dorsal24");
-
-$query = "SELECT * FROM instance ORDER BY sport_name, instance_name";
-$result = pg_query($conn, $query);
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,7 +17,7 @@ $result = pg_query($conn, $query);
 
         <nav>
             <a href="./index.html">Home</a>
-            <a href="./search/index.html">Search</a>
+            <a href="./search/index.php">Search</a>
             <a href="./about/index.html">About</a>
             <a href="#">Contact</a>
             <button class="nav-btn">List Your Program</button>
