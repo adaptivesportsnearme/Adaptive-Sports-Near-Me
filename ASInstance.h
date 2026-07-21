@@ -94,19 +94,29 @@ typedef struct {
 } ASInstance;
 
 
-// --------------- Adaptive Sports Time ---------------- //
+// --------------- Adaptive Sports Full Time ---------------- //
 /* It might often be useful to collect a narrow type of data 
    without bringing in the overhead associated with using a 
    full ASInstance. This is a class for collecting time data to later
    be merged or copied into a full ASInstance. 
 */
 
-/* Note that timezone is stored in both of the below structs. It clearly relates to time
+/* Note that timezone is stored in both ASFullTime and ASLocation. It clearly relates to time
    but also determines location within a region, so both structs may handle it.
 */
 typedef struct {
     int start_time, end_time, start_month, start_day, start_year, end_month, end_day, end_year, UTC_time;
     char * repeat, *timezone;
+} ASFullTime;
+
+
+// --------------- Adaptive Sports Time ---------------- //
+/* This is a small class for collecting time data to later
+   be merged or copied into a full ASInstance.'s start or
+   end time data.
+*/
+typedef struct {
+    int time, month, day, year, UTC_time;
 } ASTime;
 
 
@@ -129,6 +139,9 @@ typedef struct {
 // prints all fields of a given ASInstance
 void printASInstance(ASInstance* inst);
 
+// Prints all attributes of a given ASFullTime
+void printASFullTime(ASFullTime* time);
+
 // Prints all attributes of a given ASTime
 void printASTime(ASTime* time);
 
@@ -136,24 +149,54 @@ void printASTime(ASTime* time);
 void printASLocation(ASLocation* location);
 
 
-// -------------------- Clear Functions -------------------- //
-/* Functions to clear dynamically allocated memory stored in a given
+// -------------------- Free Functions -------------------- //
+/* Functions to free dynamically allocated memory stored in a given
    instance. Very helpful to use before freeing an instance.
 */ 
 
 /* Takes a pointer to an ASInstance as input, and frees all dynamically
-   allocated memory associated within the instance
+   allocated memory associated within the instance, including the instance
+*/ 
+void freeASInstance(ASInstance *inst);
+
+/* Takes a pointer to an ASFullTime as input, and frees all dynamically
+   allocated memory associated within the ASFullTime, including the ASFullTime
+*/ 
+void freeASFullTime(ASFullTime* time);
+
+/* Takes a pointer to an ASTime as input, and frees the ASTime
+*/ 
+void freeASTime(ASTime* time);
+
+/* Takes a pointer to an ASLocation as input, and frees all dynamically
+   allocated memory associated within the ASLocation, including the ASLocation
+*/
+void freeASLocation(ASLocation* location);
+
+
+// -------------------- Clear Functions -------------------- //
+/* Functions to reset an instance's fields back to their default values,
+   freeing dynamically allocated memory.
+*/ 
+
+/* Takes a pointer to an ASInstance as input, and resets the ASInstance back
+   to its default values, freeing any dynamically allocated memory.
 */ 
 void clearASInstance(ASInstance *inst);
 
-/* Takes a pointer to an ASTime as input, and frees all dynamically
-   allocated memory associated within the ASTime
+/* Takes a pointer to an ASFullTime as input, and resets the ASFullTime back
+   to its default values, freeing any dynamically allocated memory.
+*/ 
+void clearASFullTime(ASFullTime* time);
+
+/* Takes a pointer to an ASTime as input, and resets the ASTime back
+   to its default values.
 */ 
 void clearASTime(ASTime* time);
 
-/* Takes a pointer to an ASLocation as input, and frees all dynamically
-   allocated memory associated within the ASLoc
-*/
+/* Takes a pointer to an ASLocation as input, and resets the ASLocation back
+   to its default values, freeing any dynamically allocated memory.
+*/ 
 void clearASLocation(ASLocation* location);
 
 
@@ -172,62 +215,128 @@ void ASInstanceFormatMemory(ASInstance* inst);
 
 /*  Takes two ASInstances as input. 
 
-    If inst2 has a value in any field where inst1 has a default value, 
-    inst1 will be given the value of inst2's field. Note that this 
-    gives inst1 priority when both instances have non-default values, 
+    If src has a value in any field where dest has a default value, 
+    dest will be given the value of src's field. Note that this 
+    gives dest priority when both instances have non-default values, 
     so use caution! Dynamic values are copied into a new memory block 
-    to avoid unintentional frees. */
+     */
 void mergeASInstance(ASInstance *dest, ASInstance *src);
 
-/* Note that there are no functions to merge one ASTime to another, or
+/* Note that there are no functions to merge one ASFullTime to another, or
    one ASLocation to another. If you'd like to do:
 
-       mergeASTimeToASTime(time1, time2);
-        mergeASTime(inst, time1);
+        mergeASFullTimeToASFullTime(time1, time2);
+        mergeASFullTime(inst, time1);
 
-    You can instead
+    for instance, you can instead do:
 
-        mergeASTime(inst, time1);
-        mergeASTime(inst, time2);
+        mergeASFullTime(inst, time1);
+        mergeASFullTime(inst, time2);
 
-    If you'd instead like to copy the merged times, simply do
+    If you'd instead like to copy the merged times, simply do:
 
-        copyASTime(inst, time1);
-        mergeASTime(inst, time1);
+        copyASFullTime(inst, time1);
+        mergeASFullTime(inst, time1);
 
 */
 
 /* Modifies inst such that for any time field where the ASInstance has
-   a default value and the ASTime has a non-default value, inst will
-   copy ASTime's value for that field.
+   a default value and the ASFullTime has a non-default value, inst will
+   copy ASFullTime's value for that field.
 */
-void mergeASTime(ASInstance * inst, ASTime * time);
+void mergeASFullTime(ASInstance * inst, ASFullTime * time);
+
+/* Modifies inst such that for any starting time field where the ASInstance has
+   a default value and the ASTime has a non-default value, inst will
+   be given ASFullTime's value for that starting field.
+*/
+void mergeASTimeStart(ASInstance * inst, ASTime * time);
+
+/* Modifies inst such that for any ending time field where the ASInstance has
+   a default value and the ASTime has a non-default value, inst will
+   be given ASFullTime's value for that ending field.
+*/
+void mergeASTimeEnd(ASInstance * inst, ASTime * time);
 
 /* Modifies inst such that for any time field where the ASInstance has
-   a default value and the ASTime has a non-default value, inst will
-   copy ASTime's value for that field.
+   a default value and the ASFullTime has a non-default value, inst will
+   be given ASFullTime's value for that field.
 */
 void mergeASLocation(ASInstance * inst, ASLocation * location);
 
 
+// -------------------- Push Functions -------------------- //
+/*  Functions to move data from one object to another. Pushing is
+    similar to merging, but pushing overwrites data in the target
+    object, except where the source object has the default value.
+*/ 
+
+/*  Takes two ASInstances as input. 
+
+    For any field in src with a non-default value, 
+    dest will be given the value of src's field. Note that this 
+    gives src priority when both instances have non-default values, 
+    so use caution! Dynamic values are copied into a new memory block.
+*/
+void pushASInstance(ASInstance *dest, ASInstance *src);
+
+
+/* Modifies inst such that for any time field where ASFullTime has a non-default value, 
+   inst willcopy ASFullTime's value for that field. Dynamic values are copied into a new memory block.
+*/
+void pushASFullTime(ASInstance * inst, ASFullTime * time);
+
+/* Modifies inst such that for any starting time field where ASTime has a 
+   non-default value, inst will copy ASFullTime's value for that starting field.
+   Dynamic values are copied into a new memory block.
+*/
+void pushASTimeStart(ASInstance * inst, ASTime * time);
+
+/* Modifies inst such that for any ending time field where ASTime has a 
+   non-default value, inst will copy ASFullTime's value for that ending field.
+   Dynamic values are copied into a new memory block.
+*/
+void pushASTimeEnd(ASInstance * inst, ASTime * time);
+
+/* Modifies inst such that for any time field where the ASLocation 
+   has a non-default value, inst will copy ASFullTime's value for that field.
+   Dynamic values are copied into a new memory block.
+*/
+void pushASLocation(ASInstance * inst, ASLocation * location);
+
+
 // -------------------- Copy Functions -------------------- //
 
-/* Copies all data from inst2 into inst1, deleting any data stored in 
-   inst1
+/* Copies all data from src into dest, deleting any data stored in 
+   dest
 */
 void copyASInstance(ASInstance* dest, ASInstance* src);
 
-/* Gives all time fields stored in inst the values of the ASTime provided.
-   This function is distinct from merge in that the ASTime will override 
-   all time values in inst Any dynamically allocated time variables in inst
-   will be freed 
+/* Copies all fields in the ASFullTime to their respective fields in inst, overwriting
+   all time fields in inst. Any dynamically allocated time variables in inst will be freed and 
+   overwritten.
 */
-void copyASTime(ASInstance * inst, ASTime * time);
+void copyASFullTime(ASInstance * inst, ASFullTime * time);
 
-/* Gives all location fields stored in inst the values of the ASLocation provided.
-   This function is distinct from merge in that the ASLocation will override 
-   all location values in inst. Any dynamically allocated location variables in inst
-   will be freed if they have a value.
+/* Copies all fields in the ASTime to their respective starting fields in inst, overwriting
+   all time fields in inst. Any dynamically allocated time variables in inst will be freed and 
+   overwritten.
+
+   (time->month ==> inst->start_month, time->year ==> inst->start_month, etc.)
+*/
+void copyASTimeStart(ASInstance * inst, ASTime * time);
+
+/* Copies all fields in the ASTime to their respective ending fields in inst, overwriting
+   all time fields in inst. Any dynamically allocated time variables in inst will be freed and 
+   overwritten.
+
+   (time->month ==> inst->end_month, time->year ==> inst->end_month, etc.)
+*/
+void copyASTimeEnd(ASInstance * inst, ASTime * time);
+
+/* Copies all fields in the ASLocation to their respective fields in inst, overwriting
+   all location fields in inst. Any dynamically allocated location variables in inst will be freed and 
+   overwritten.
 */
 void copyASLocation(ASInstance * inst, ASLocation * location);
 

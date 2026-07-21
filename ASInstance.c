@@ -80,104 +80,6 @@
 #include "ASInstance.h"
 
 
-// -------------------- Print Functions -------------------- //
-// A family of functions for printing the information stored in
-// the structs specified earlier. These take up multiple lines
-// and are best used for debugging. 
-
-
-// prints all fields of a given ASInstance
-void printASInstance(ASInstance* inst) {
-    if (inst == NULL) return;
-
-    printf("id = %d\nname = %s\ndescription = %s\n", inst->id, inst->name, inst->description);
-    printf("sport name = %s\norganization_id = %s\n", inst->sport_name, inst->organization_id);
-    printf("zip = %s\ncity = %s\nstate = %s\ncountry = %s\n", inst->zip, inst->city, inst->state, inst->country);
-    printf("address line 1 = %s\naddress line 2 = %s\n", inst->address_line_1, inst->address_line_2);
-    printf("start year = %d\nend year = %d\nstart month = %d\nend month = %d\nstart day = %d\nend day = %d\nstart time = %d\nend time = %d\n", inst->start_year, inst->end_year, inst->start_month, inst->end_month, inst->start_day, inst->end_day, inst->start_time, inst->end_time);
-    printf("timezone = %s\nrepeat = %s\n", inst->timezone, inst->repeat);
-    printf("UTC time = %d\nallows beginners = %d\nallows intermediate = %d\nallows advanced = %d\n", inst->UTC_time, inst->allows_beginners, inst->allows_intermediate, inst->allows_advanced);
-    printf("age floor = %d\nage ceiling = %d\ncost = %d\n", inst->age_floor, inst->age_ceil, inst->cost);
-
-}
-
-
-// Prints all attributes of a given ASTime
-void printASTime(ASTime* time) {
-    if (time == NULL) return;
-    
-    printf("start year = %d\nend year = %d\nstart month = %d\nend month = %d\nstart day = %d\nend day = %d\nstart time = %d\nend time = %d\n", time->start_year, time->end_year, time->start_month, time->end_month, time->start_day, time->end_day, time->start_time, time->end_time);
-    printf("UTC time = %d\n", time->UTC_time);
-    printf("timezone = %s\nrepeat = %s\n", time->timezone, time->repeat);
-
-}
-
-
-// prints all fields of a given ASLocation
-void printASLocation(ASLocation* location) {
-    if (location == NULL) return;
-
-    printf("zip = %s\ncity = %s\nstate = %s\ncountry = %s\n", location->zip, location->city, location->state, location->country);
-    printf("address line 1 = %s\naddress line 2 = %s\n", location->address_line_1, location->address_line_2);
-    printf("timezone = %s\n", location->timezone);
-
-}
-
-
-
-// -------------------- Clear Functions -------------------- //
-// Functions to clear dynamically allocated memory stored in a given
-// instance. Very helpful to use before freeing an instance.
-
-// Takes a pointer to an ASInstance as input, and frees all dynamically
-// allocated memory associated within the instance
-void clearASInstance(ASInstance *inst) {
-
-    if (inst == NULL) return;
-
-    if (inst->name != NULL) free(inst->name);
-    if (inst->description != NULL) free(inst->description);
-    if (inst->sport_name != NULL) free(inst->sport_name);
-    if (inst->organization_id != NULL) free(inst->organization_id);
-    if (inst->zip != NULL) free(inst->zip);
-    if (inst->city != NULL) free(inst->city);
-    if (inst->state != NULL) free(inst->state);
-    if (inst->country != NULL) free(inst->country);
-    if (inst->address_line_1 != NULL) free(inst->address_line_1);
-    if (inst->address_line_2 != NULL) free(inst->address_line_2);
-    if (inst->timezone != NULL) free(inst->timezone);
-    if (inst->repeat != NULL) free(inst->repeat);
-
-}
-
-
-// Takes a pointer to an ASTime as input, and frees all dynamically
-// allocated memory associated within the AST
-void clearASTime(ASTime* time) {
-
-    if (time == NULL) return;
-
-    if (time->repeat != NULL) free(time->repeat);
-    if (time->timezone != NULL) free(time->timezone);
-}
-
-
-// Takes a pointer to an ASLocation as input, and frees all dynamically
-// allocated memory associated within the ASLoc
-void clearASLocation(ASLocation* location) {
-
-    if (location == NULL) return;
-
-    if (location->zip != NULL) free(location->zip);
-    if (location->city != NULL) free(location->city);
-    if (location->state != NULL) free(location->state);
-    if (location->country != NULL) free(location->country);
-    if (location->address_line_1 != NULL) free(location->address_line_1);
-    if (location->address_line_2 != NULL) free(location->address_line_2);
-    if (location->timezone != NULL) free(location->timezone);
-}
-
-
 
 // -------------------- Helper Functions -------------------- //
 // Functions for internal use within this module. 
@@ -201,11 +103,303 @@ void ASInstanceTrimStringTo(char** string, size_t length) {
 
 // Returns a reference to a new character buffer with the same content as the input string
 char* ASInstanceCopyString(char* str) {
+
+    if (str == NULL) return NULL;
+
     char * retstr = calloc(strlen(str) + 1, sizeof(char));
 
     memcpy(retstr, str, strlen(str)); // calloc guarantees a '\0'
     return retstr;
 }
+
+
+
+// -------------------- Print Functions -------------------- //
+// A family of functions for printing the information stored in
+// the structs specified earlier. These take up multiple lines
+// and are best used for debugging. 
+
+
+// prints all fields of a given ASInstance
+void printASInstance(ASInstance* inst) {
+    if (inst == NULL) return;
+
+    printf("id = %d\nname = %s\ndescription = %s\n", inst->id, inst->name, inst->description);
+    printf("sport name = %s\norganization_id = %s\n", inst->sport_name, inst->organization_id);
+    printf("zip = %s\ncity = %s\nstate = %s\ncountry = %s\n", inst->zip, inst->city, inst->state, inst->country);
+    printf("address line 1 = %s\naddress line 2 = %s\n", inst->address_line_1, inst->address_line_2);
+    printf("start year = %dstart month = %d\nstart day = %d\nstart time = %d\nend year = %d\nend month = %d\nend day = %d\nend time = %d\n", inst->start_year, inst->start_month, inst->start_day, inst->start_time, inst->end_year, inst->end_month, inst->end_day, inst->end_time);
+    printf("timezone = %s\nrepeat = %s\n", inst->timezone, inst->repeat);
+    printf("UTC time = %d\nallows beginners = %d\nallows intermediate = %d\nallows advanced = %d\n", inst->UTC_time, inst->allows_beginners, inst->allows_intermediate, inst->allows_advanced);
+    printf("age floor = %d\nage ceiling = %d\ncost = %d\n", inst->age_floor, inst->age_ceil, inst->cost);
+
+}
+
+
+// Prints all attributes of a given ASFullTime
+void printASFullTime(ASFullTime* time) {
+    if (time == NULL) return;
+    
+    printf("start year = %dstart month = %d\nstart day = %d\nstart time = %d\nend year = %d\nend month = %d\nend day = %d\nend time = %d\n", time->start_year, time->start_month, time->start_day, time->start_time, time->end_year, time->end_month, time->end_day, time->end_time);
+    printf("UTC time = %d\n", time->UTC_time);
+    printf("timezone = %s\nrepeat = %s\n", time->timezone, time->repeat);
+
+}
+
+
+// Prints all attributes of a given ASTime
+void printASTime(ASTime* time) {
+    if (time == NULL) return;
+    
+    printf("year = %d\nmonth = %d\nday = %d\ntime = %d\n", time->year, time->month, time->day, time->time);
+    printf("UTC time = %d\n", time->UTC_time);
+
+}
+
+
+// prints all fields of a given ASLocation
+void printASLocation(ASLocation* location) {
+    if (location == NULL) return;
+
+    printf("zip = %s\ncity = %s\nstate = %s\ncountry = %s\n", location->zip, location->city, location->state, location->country);
+    printf("address line 1 = %s\naddress line 2 = %s\n", location->address_line_1, location->address_line_2);
+    printf("timezone = %s\n", location->timezone);
+
+}
+
+
+
+// -------------------- Free Functions -------------------- //
+/* Functions to free dynamically allocated memory stored in a given
+   instance. Very helpful to use before freeing an instance.
+*/ 
+
+// Takes a pointer to an ASInstance as input, and frees all dynamically
+// allocated memory associated within the instance, including the instance
+void freeASInstance(ASInstance *inst) {
+
+    if (inst == NULL) return;
+
+    if (inst->name != NULL) free(inst->name);
+    if (inst->description != NULL) free(inst->description);
+    if (inst->sport_name != NULL) free(inst->sport_name);
+    if (inst->organization_id != NULL) free(inst->organization_id);
+    if (inst->zip != NULL) free(inst->zip);
+    if (inst->city != NULL) free(inst->city);
+    if (inst->state != NULL) free(inst->state);
+    if (inst->country != NULL) free(inst->country);
+    if (inst->address_line_1 != NULL) free(inst->address_line_1);
+    if (inst->address_line_2 != NULL) free(inst->address_line_2);
+    if (inst->timezone != NULL) free(inst->timezone);
+    if (inst->repeat != NULL) free(inst->repeat);
+
+    free(inst);
+
+}
+
+
+// Takes a pointer to an ASFullTime as input, and frees all dynamically
+// allocated memory associated within the ASFullTime
+void freeASFullTime(ASFullTime* time) {
+
+    if (time == NULL) return;
+
+    if (time->repeat != NULL) free(time->repeat);
+    if (time->timezone != NULL) free(time->timezone);
+
+    free(time);
+}
+
+
+// Takes a pointer to an ASTime as input, and frees the ASTime
+// This function is strictly speaking unnecessary, but included for uniform 
+// function naming
+void freeASTime(ASTime* time) {
+
+    if (time == NULL) return;
+
+    free(time);
+}
+
+
+// Takes a pointer to an ASLocation as input, and frees all dynamically
+// allocated memory associated within the ASLocation, including the ASLocation
+void freeASLocation(ASLocation* location) {
+
+    if (location == NULL) return;
+
+    if (location->zip != NULL) free(location->zip);
+    if (location->city != NULL) free(location->city);
+    if (location->state != NULL) free(location->state);
+    if (location->country != NULL) free(location->country);
+    if (location->address_line_1 != NULL) free(location->address_line_1);
+    if (location->address_line_2 != NULL) free(location->address_line_2);
+    if (location->timezone != NULL) free(location->timezone);
+
+    free(location);
+}
+
+
+
+// -------------------- Clear Functions -------------------- //
+/* Functions to reset an instance's fields back to their default values.
+*/ 
+
+
+/* Takes a pointer to an ASInstance as input, and resets the ASInstance back
+   to its default values, freeing any dynamically allocated memory.
+*/ 
+void clearASInstance(ASInstance *inst) {
+
+    if (inst == NULL) return;
+
+    if (inst->name != NULL) { // dynamically allocated values should be NULL once freed
+        free(inst->name);
+        inst->name = NULL;
+    }
+    if (inst->description != NULL) {
+        free(inst->description);
+        inst->description = NULL;
+    }
+    if (inst->sport_name != NULL) {
+        free(inst->sport_name);
+        inst->sport_name = NULL;
+    }
+    if (inst->organization_id != NULL) {
+        free(inst->organization_id);
+        inst->organization_id = NULL;
+    }
+    if (inst->zip != NULL) {
+        free(inst->zip);
+        inst->zip = NULL;
+    }
+    if (inst->city != NULL) {
+        free(inst->city);
+        inst->city = NULL;
+    }
+    if (inst->state != NULL) {
+        free(inst->state);
+        inst->state = NULL;
+    }
+    if (inst->country != NULL) {
+        free(inst->country);
+        inst->country = NULL;
+    }
+    if (inst->address_line_1 != NULL) {
+        free(inst->address_line_1);
+        inst->address_line_1 = NULL;
+    }
+    if (inst->address_line_2 != NULL) {
+        free(inst->address_line_2);
+        inst->address_line_2 = NULL;
+    }
+    if (inst->timezone != NULL) {
+        free(inst->timezone);
+        inst->timezone = NULL;
+    }
+    if (inst->repeat != NULL) {
+        free(inst->repeat);
+        inst->repeat = NULL;
+    }
+
+    inst->id = 0;
+    inst->start_time = 0;
+    inst->end_time = 0;
+    inst->start_day = 0;
+    inst->end_day = 0;
+    inst->start_month = 0;
+    inst->end_month = 0;
+    inst->start_year = 0;
+    inst->end_year= 0;
+    inst->UTC_time = 0;
+    inst->allows_advanced = 0;
+    inst->allows_beginners = 0;
+    inst->allows_intermediate = 0;
+    inst->age_ceil = 0;
+    inst->age_floor = 0;
+    inst->cost = 0;
+}
+
+
+/* Takes a pointer to an ASFullTime as input, and resets the ASFullTime back
+   to its default values, freeing any dynamically allocated memory.
+*/ 
+void clearASFullTime(ASFullTime* time) {
+
+    if (time == NULL) return;
+
+    if (time->timezone != NULL) {
+        free(time->timezone);
+        time->timezone = NULL;
+    }
+    if (time->repeat != NULL) {
+        free(time->repeat);
+        time->repeat = NULL;
+    }
+
+    time->start_time = 0;
+    time->end_time = 0;
+    time->start_day = 0;
+    time->end_day = 0;
+    time->start_month = 0;
+    time->end_month = 0;
+    time->start_year = 0;
+    time->end_year= 0;
+    time->UTC_time = 0;
+}
+
+
+/* Takes a pointer to an ASTime as input, and resets the ASTime back
+   to its default values.
+*/ 
+void clearASTime(ASTime* time) {
+
+    if (time == NULL) return;
+
+    time->time = 0;
+    time->day = 0;
+    time->month = 0;
+    time->year = 0;
+}
+
+
+// Takes a pointer to an ASLocation as input, and frees all dynamically
+// allocated memory associated within the ASLocation, including the ASLocation
+void clearASLocation(ASLocation* location) {
+
+    if (location == NULL) return;
+
+    if (location->zip != NULL) {
+        free(location->zip);
+        location->zip = NULL;
+    }
+    if (location->city != NULL) {
+        free(location->city);
+        location->city = NULL;
+    }
+    if (location->state != NULL) {
+        free(location->state);
+        location->state = NULL;
+    }
+    if (location->country != NULL) {
+        free(location->country);
+        location->country = NULL;
+    }
+    if (location->address_line_1 != NULL) {
+        free(location->address_line_1);
+        location->address_line_1 = NULL;
+    }
+    if (location->address_line_2 != NULL) {
+        free(location->address_line_2);
+        location->address_line_2 = NULL;
+    }
+    if (location->timezone != NULL) {
+        free(location->timezone);
+        location->timezone = NULL;
+    }
+
+}
+
 
 
 // ---------------- Naive Data Cleaning -------------------- //
@@ -279,29 +473,29 @@ void mergeASInstance(ASInstance *dest, ASInstance *src) {
 }
 
 
-// Note that there are no functions to merge one ASTime to another, or
+// Note that there are no functions to merge one ASFullTime to another, or
 // one ASLocation to another. If you'd like to do:
 
-/*      mergeASTimeToASTime(time1, time2);
-        mergeASTime(inst, time1);
+/*      mergeASFullTimeToASFullTime(time1, time2);
+        mergeASFullTime(inst, time1);
 
     You can instead
 
-        mergeASTime(inst, time1);
-        mergeASTime(inst, time2);
+        mergeASFullTime(inst, time1);
+        mergeASFullTime(inst, time2);
 
     If you'd instead like to copy the merged times, simply do
 
-        copyASTime(inst, time1);
-        mergeASTime(inst, time1);
+        copyASFullTime(inst, time1);
+        mergeASFullTime(inst, time1);
 
 */
 
 
 // Modifies inst such that for any time field where the ASInstance has
-// a default value and the ASTime has a non-default value, inst will
-// copy ASTime's value for that field.
-void mergeASTime(ASInstance * inst, ASTime * time) {
+// a default value and the ASFullTime has a non-default value, inst will
+// copy ASFullTime's value for that field.
+void mergeASFullTime(ASInstance * inst, ASFullTime * time) {
     if (inst->start_day == 0 && time->start_day != 0) inst->start_day = time->start_day;
     if (inst->start_month == 0 && time->start_month != 0) inst->start_month = time->start_month;
     if (inst->start_year == 0 && time->start_year != 0) inst->start_year = time->start_year;
@@ -318,9 +512,37 @@ void mergeASTime(ASInstance * inst, ASTime * time) {
 }
 
 
+/* Modifies inst such that for any starting time field where the ASInstance has
+   a default value and the ASTime has a non-default value, inst will
+   copy ASFullTime's value for that starting field.
+*/
+void mergeASTimeStart(ASInstance * inst, ASTime * time) {
+    if (inst->start_day == 0 && time->day != 0) inst->start_day = time->day;
+    if (inst->start_month == 0 && time->month != 0) inst->start_month = time->month;
+    if (inst->start_year == 0 && time->year != 0) inst->start_year = time->year;
+    if (inst->start_time == 0 && time->time != 0) inst->start_time = time->time;
+
+    if (inst->UTC_time == 0 && time->UTC_time != 0) inst->UTC_time = time->UTC_time;
+}
+
+
+/* Modifies inst such that for any ending time field where the ASInstance has
+   a default value and the ASTime has a non-default value, inst will
+   copy ASFullTime's value for that ending field.
+*/
+void mergeASTimeEnd(ASInstance * inst, ASTime * time) {
+    if (inst->end_day == 0 && time->day != 0) inst->end_day = time->day;
+    if (inst->end_month == 0 && time->month != 0) inst->end_month = time->month;
+    if (inst->end_year == 0 && time->year != 0) inst->end_year = time->year;
+    if (inst->end_time == 0 && time->time != 0) inst->end_time = time->time;
+
+    if (inst->UTC_time == 0 && time->UTC_time != 0) inst->UTC_time = time->UTC_time;
+}
+
+
 // Modifies inst such that for any time field where the ASInstance has
-// a default value and the ASTime has a non-default value, inst will
-// copy ASTime's value for that field.
+// a default value and the ASFullTime has a non-default value, inst will
+// copy ASFullTime's value for that field.
 void mergeASLocation(ASInstance * inst, ASLocation * location) {
     if (inst->zip == NULL && location->zip != NULL) inst->zip = ASInstanceCopyString(location->zip);
     if (inst->city == NULL && location->city != NULL) inst->city = ASInstanceCopyString(location->city);
@@ -330,6 +552,141 @@ void mergeASLocation(ASInstance * inst, ASLocation * location) {
     if (inst->address_line_2 == NULL && location->address_line_2 != NULL) inst->address_line_2 = ASInstanceCopyString(location->address_line_2);
     if (inst->timezone == NULL && location->timezone != NULL) inst->timezone = ASInstanceCopyString(location->timezone);
 }
+
+
+
+// -------------------- Push Functions -------------------- //
+/*  Functions to move data from one object to another. Pushing is
+    similar to merging, but pushing overwrites data in the target
+    object, except where the pushed object has the default value
+*/ 
+
+/*  Takes two ASInstances as input. 
+
+    For any field in src with a non-default value, 
+    dest will be given the value of src's field. Note that this 
+    gives src priority when both instances have non-default values, 
+    so use caution! Dynamic values are copied into a new memory block 
+    to avoid unintentional frees. */
+void pushASInstance(ASInstance *dest, ASInstance *src) {
+    if (src->id != 0) dest->id = src->id;
+
+    if (src->name != NULL && dest->name != NULL) free(dest->name);
+    if (src->name != NULL) dest->name = ASInstanceCopyString(src->name);
+    if (src->description != NULL && dest->description != NULL) free(dest->description);
+    if (src->description != NULL) dest->description = ASInstanceCopyString(src->description);
+    if (src->sport_name != NULL && dest->sport_name != NULL) free(dest->sport_name);
+    if (src->sport_name != NULL) dest->sport_name = ASInstanceCopyString(src->sport_name);
+    if (src->organization_id != NULL && dest->organization_id != NULL) free(dest->organization_id);
+    if (src->organization_id != NULL) dest->organization_id = ASInstanceCopyString(src->organization_id);
+    if (src->zip != NULL && dest->zip != NULL) free(dest->zip);
+    if (src->zip != NULL) dest->zip = ASInstanceCopyString(src->zip);
+    if (src->city != NULL && dest->city != NULL) free(dest->city);
+    if (src->city != NULL) dest->city = ASInstanceCopyString(src->city);
+    if (src->state != NULL && dest->state != NULL) free(dest->state);
+    if (src->state != NULL) dest->state = ASInstanceCopyString(src->state);
+    if (src->country != NULL && dest->country != NULL) free(dest->country);
+    if (src->country != NULL) dest->country = ASInstanceCopyString(src->country);
+    if (src->address_line_1 != NULL && dest->address_line_1 != NULL) free(dest->address_line_1);
+    if (src->address_line_1 != NULL) dest->address_line_1 = ASInstanceCopyString(src->address_line_1);
+    if (src->address_line_2 != NULL && dest->address_line_2 != NULL) free(dest->address_line_2);
+    if (src->address_line_2 != NULL) dest->address_line_2 = ASInstanceCopyString(src->address_line_2);
+    if (src->timezone != NULL && dest->timezone != NULL) free(dest->timezone);
+    if (src->timezone != NULL) dest->timezone = ASInstanceCopyString(src->timezone);
+    if (src->repeat != NULL && dest->repeat != NULL) free(dest->repeat);
+    if (src->repeat != NULL) dest->repeat = ASInstanceCopyString(src->repeat);
+
+    if (src->start_day != 0) dest->start_day = src->start_day;
+    if (src->start_month != 0)dest->start_month = src->start_month;
+    if (src->start_year != 0)dest->start_year = src->start_year;
+    if (src->start_time != 0)dest->start_time = src->start_time;
+
+    if (src->end_day != 0)dest->end_day = src->end_day;
+    if (src->end_month != 0)dest->end_month = src->end_month;
+    if (src->end_year != 0)dest->end_year = src->end_year;
+    if (src->end_time != 0)dest->end_time = src->end_time;
+
+    if (src->UTC_time != 0)dest->UTC_time = src->UTC_time;
+    if (src->allows_beginners != 0)dest->allows_beginners = src->allows_beginners;
+    if (src->allows_intermediate != 0)dest->allows_intermediate = src->allows_intermediate;
+    if (src->allows_advanced != 0)dest->allows_advanced = src->allows_advanced;
+
+    if (src->cost != 0)dest->cost = src->cost;
+    if (src->age_floor != 0)dest->age_floor = src->age_floor;
+    if (src->age_ceil != 0)dest->age_ceil = src->age_ceil;
+}
+
+
+/* Modifies inst such that for any time field where ASFullTime has a non-default value, 
+   inst will be given ASFullTime's value for that field. Dynamic values are copied into a new memory block 
+    to avoid unintentional frees.
+*/
+void pushASFullTime(ASInstance * inst, ASFullTime * time) {
+    if (time->start_day != 0) inst->start_day = time->start_day;
+    if (time->start_month != 0)inst->start_month = time->start_month;
+    if (time->start_year != 0)inst->start_year = time->start_year;
+    if (time->start_time != 0)inst->start_time = time->start_time;
+
+    if (time->end_day != 0)inst->end_day = time->end_day;
+    if (time->end_month != 0)inst->end_month = time->end_month;
+    if (time->end_year != 0)inst->end_year = time->end_year;
+    if (time->end_time != 0)inst->end_time = time->end_time;
+
+    if (time->UTC_time != 0)inst->UTC_time = time->UTC_time;
+
+    if (time->timezone != NULL && inst->timezone != NULL) free(inst->timezone);
+    if (time->timezone != NULL) inst->timezone = ASInstanceCopyString(time->timezone);
+    if (time->repeat != NULL && inst->repeat != NULL) free(inst->repeat);
+    if (time->repeat != NULL) inst->repeat = ASInstanceCopyString(time->repeat);
+}
+
+
+/* Modifies inst such that for any starting time field where ASTime has a 
+   non-default value, inst will copy ASFullTime's value for that starting field.
+*/
+void pushASTimeStart(ASInstance * inst, ASTime * time) {
+    if (time->day != 0) inst->start_day = time->day;
+    if (time->month != 0)inst->start_month = time->month;
+    if (time->year != 0)inst->start_year = time->year;
+    if (time->time != 0)inst->start_time = time->time;
+
+    if (time->UTC_time != 0) inst->UTC_time = time->UTC_time;
+}
+
+
+/* Modifies inst such that for any ending time field where ASTime has a 
+   non-default value, inst will copy ASFullTime's value for that ending field.
+*/
+void pushASTimeEnd(ASInstance * inst, ASTime * time) {
+    if (time->day != 0) inst->end_day = time->day;
+    if (time->month != 0)inst->end_month = time->month;
+    if (time->year != 0)inst->end_year = time->year;
+    if (time->time != 0)inst->end_time = time->time;
+
+    if (time->UTC_time != 0) inst->UTC_time = time->UTC_time;
+}
+
+
+/* Modifies inst such that for any time field where the ASLocation 
+   has a non-default value, inst will copy ASFullTime's value for that field.
+*/
+void pushASLocation(ASInstance * inst, ASLocation * location) {
+    if (location->zip != NULL && inst->zip != NULL) free(inst->zip);
+    if (location->zip != NULL) inst->zip = ASInstanceCopyString(location->zip);
+    if (location->city != NULL && inst->city != NULL) free(inst->city);
+    if (location->city != NULL) inst->city = ASInstanceCopyString(location->city);
+    if (location->state != NULL && inst->state != NULL) free(inst->state);
+    if (location->state != NULL) inst->state = ASInstanceCopyString(location->state);
+    if (location->country != NULL && inst->country != NULL) free(inst->country);
+    if (location->country != NULL) inst->country = ASInstanceCopyString(location->country);
+    if (location->address_line_1 != NULL && inst->address_line_1 != NULL) free(inst->address_line_1);
+    if (location->address_line_1 != NULL) inst->address_line_1 = ASInstanceCopyString(location->address_line_1);
+    if (location->address_line_2 != NULL && inst->address_line_2 != NULL) free(inst->address_line_2);
+    if (location->address_line_2 != NULL) inst->address_line_2 = ASInstanceCopyString(location->address_line_2);
+    if (location->timezone != NULL && inst->timezone != NULL) free(inst->timezone);
+    if (location->timezone != NULL) inst->timezone = ASInstanceCopyString(location->timezone);
+}
+
 
 
 // -------------------- Copy Functions -------------------- //
@@ -376,11 +733,13 @@ void copyASInstance(ASInstance* dest, ASInstance* src) {
 
 }
 
-// Gives all time fields stored in inst the values of the ASTime provided.
-// This function is distinct from merge in that the ASTime will override 
+// Gives all time fields stored in inst the values of the ASFullTime provided.
+// This function is distinct from merge in that the ASFullTime will override 
 // all time values in inst Any dynamically allocated time variables in inst
 // will be freed
-void copyASTime(ASInstance * inst, ASTime * time) {
+void copyASFullTime(ASInstance * inst, ASFullTime * time) {
+
+
     inst->start_day = time->start_day;
     inst->start_month = time->start_month;
     inst->start_year = time->start_year;
@@ -392,10 +751,41 @@ void copyASTime(ASInstance * inst, ASTime * time) {
     inst->end_time = time->end_time;
 
     inst->UTC_time = time->UTC_time;
+
     if (inst->repeat != NULL) free(inst->repeat);
-    if (time->repeat != NULL) inst->repeat = ASInstanceCopyString(time->repeat);
+    if (time->repeat != NULL) inst->repeat = ASInstanceCopyString(time->repeat); else inst->repeat = NULL;
     if (inst->timezone != NULL) free(inst->timezone);
-    if (time->timezone != NULL) inst->timezone = ASInstanceCopyString(time->timezone);
+    if (time->timezone != NULL) inst->timezone = ASInstanceCopyString(time->timezone); else inst->timezone = NULL;
+}
+
+/* Copies all fields in the ASTime to their respective starting fields in inst, overwriting
+   all time fields in inst. Any dynamically allocated time variables in inst will be freed and 
+   overwritten.
+
+   (time->month ==> inst->start_month, time->year ==> inst->start_month, etc.)
+*/
+void copyASTimeStart(ASInstance * inst, ASTime * time) {
+    inst->start_day = time->day;
+    inst->start_month = time->month;
+    inst->start_year = time->year;
+    inst->start_time = time->time;
+
+    inst->UTC_time = time->UTC_time;
+}
+
+/* Copies all fields in the ASTime to their respective ending fields in inst, overwriting
+   all time fields in inst. Any dynamically allocated time variables in inst will be freed and 
+   overwritten.
+
+   (time->month ==> inst->end_month, time->year ==> inst->end_month, etc.)
+*/
+void copyASTimeEnd(ASInstance * inst, ASTime * time) {
+    inst->end_day = time->day;
+    inst->end_month = time->month;
+    inst->end_year = time->year;
+    inst->end_time = time->time;
+
+    inst->UTC_time = time->UTC_time;
 }
 
 
@@ -406,17 +796,17 @@ void copyASTime(ASInstance * inst, ASTime * time) {
 void copyASLocation(ASInstance * inst, ASLocation * location) {
 
     if (inst->zip != NULL) free(inst->zip);
-    if (location->zip != NULL) inst->zip = ASInstanceCopyString(location->zip);
+    if (location->zip != NULL) inst->zip = ASInstanceCopyString(location->zip); else inst->zip = NULL;
     if (inst->city != NULL) free(inst->city);
-    if (location->city != NULL) inst->city = ASInstanceCopyString(location->city);
+    if (location->city != NULL) inst->city = ASInstanceCopyString(location->city); else inst->city = NULL;
     if (inst->state != NULL) free(inst->state);
-    if (location->state != NULL) inst->state = ASInstanceCopyString(location->state);
+    if (location->state != NULL) inst->state = ASInstanceCopyString(location->state); else inst->state = NULL;
     if (inst->country != NULL) free(inst->country);
-    if (location->country != NULL) inst->country = ASInstanceCopyString(location->country);
+    if (location->country != NULL) inst->country = ASInstanceCopyString(location->country); else inst->country = NULL;
     if (inst->address_line_1 != NULL) free(inst->address_line_1);
-    if (location->address_line_1 != NULL) inst->address_line_1 = ASInstanceCopyString(location->address_line_1);
+    if (location->address_line_1 != NULL) inst->address_line_1 = ASInstanceCopyString(location->address_line_1); else inst->address_line_1 = NULL;
     if (inst->address_line_2 != NULL) free(inst->address_line_2);
-    if (location->address_line_2 != NULL) inst->address_line_2 = ASInstanceCopyString(location->address_line_2);
+    if (location->address_line_2 != NULL) inst->address_line_2 = ASInstanceCopyString(location->address_line_2); else inst->address_line_2 = NULL;
     if (inst->timezone != NULL) free(inst->timezone);
-    if (location->timezone != NULL) inst->timezone = ASInstanceCopyString(location->timezone);
+    if (location->timezone != NULL) inst->timezone = ASInstanceCopyString(location->timezone); else inst->timezone = NULL;
 }
