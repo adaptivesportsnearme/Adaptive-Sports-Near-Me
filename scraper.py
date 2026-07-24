@@ -1,4 +1,5 @@
 import requests
+import re
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 #"Bad" links are those we know do not have any need for the project, will update to keep it in a txt file for simplicity's sake
@@ -37,8 +38,9 @@ class SimpleWebCrawler:
             
             soup = BeautifulSoup(response.text, 'html.parser')
             paragraphs = soup.find_all('p')
-            for p in paragraphs:
-                print(p.get_text(strip=True))
+            filtered_paragraphs = [paragraph.get_text() for paragraph in paragraphs if re.search(r'\d', paragraph.get_text())]
+            for p in filtered_paragraphs:
+                print(p)
             
             # Find all hyperlinks
             for anchor in soup.find_all('a', href=True):
