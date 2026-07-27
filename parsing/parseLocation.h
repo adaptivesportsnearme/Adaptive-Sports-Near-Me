@@ -16,11 +16,12 @@ int splitString(char*** dst, char * str);
 int matchStateStrong(char ** arr, int index, int size);
 char * getCanonicalState(char ** arr, int index, int num);
 char * getCanonicalZip(char** arr, int index, int num);
-int matchAddress(char ** arr, int index, int size);
+int matchStreetAddress(char ** arr, int index, int size);
 int matchCountry(char ** arr, int index, int size);
 char * strBuildFromArr(char* str, int start_index, int len);
 int matchCommonCity(char ** arr, int index, int size);
 int getNextBreakInArr(char* str, int start_index, int size);
+int strIndexFromArr(char * str, int index);
 
 /*  Takes a string as input and returns a new string with the first
     US/CA postal code in the string, or NULL if no postal code is found.
@@ -108,5 +109,12 @@ void parseLocationASLoc(ASLocation * location, char * str);
     information or lacking necessary location information may cause 
     erroneous information to be returned.*/
 void parseLocation(ASInstance * inst, char * str);
+
+
+/*  Given a string as input, returns 1 if the string contains an address,
+    and 0 otherwise. The starting index of the likely string is put into start,
+    and the ending index into end. */
+int matchAddress(char * str, int * start_index, int * end_index);
+
 
 #endif
