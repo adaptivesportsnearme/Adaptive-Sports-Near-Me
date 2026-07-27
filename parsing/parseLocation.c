@@ -1074,7 +1074,7 @@ int matchAddress(char * str, int * start_index, int * end_index) {
             for (end  = count - 1; end > start + 2; end--) {
                 // scroll from the end until we find a state
                 if (matchStateStrong(arr, end, count)) {
-                    for (int i = end - 2; i > start + 2; i--) {
+                    for (int i = end - 2; i > start + 1; i--) {
                         // scroll in between looking for a street suffix
                         if (matchStreetSuffix(arr, i, count)) {
                             // if suffix is too far away then the address
