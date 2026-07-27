@@ -180,6 +180,50 @@ char * strBuildFromArr(char* str, int start_index, int len) {
     
 }
 
+
+// Given an array and a string, returns the substring index on str that
+// corresponds to the given index in a splitString array
+int strIndexFromArr(char* str, int arr_index) {
+    
+    if (str == NULL) return -1;
+
+    // an integer corresponding to an index in splitString(str)
+    int index = 0;
+    
+    // the start of our substring
+    int start = 0;
+
+    // advances start to the index of the first non-space character in the string.
+    while (start < strlen(str) && (isspace(*(str + start)) || *(str + start) == ',')) {
+        start++;
+    }
+
+    if (start == strlen(str)) return -1; // returns if passed a string with only spaces and commas
+
+    // keeps track of if the previous character was a space or comma
+    int lastwasspace = 0;
+
+
+    while (index < arr_index) {
+        start++;
+        if (start >= strlen(str)) return -1; // return if out of range
+        if (isspace(*(str + start)) || *(str + start) == ',') {
+            lastwasspace = 1;
+        } else {
+            if (lastwasspace == 1) {
+                index++;
+            }
+            lastwasspace = 0;
+        }
+    }
+
+    // start is now at the start of our desired substring, and index = start_index
+
+    return start;
+    
+}
+
+
 // Given a splitString array and its corresponding string, returns the index that is the
 // first after a newline or comma. An example of output depending on input index is given below
 /*        2   2   4    4     6   6      8      8
@@ -245,6 +289,13 @@ int getNextBreakInArr(char* str, int start_index, int size) {
 
     return index;
     
+}
+
+// clears all entries in a string array with ct entries
+void clearStrArr(char ** arr, int ct) {
+    for (int i = 0; i < ct; i++) {
+        if (*(arr + i) != NULL) free(*(arr + i));
+    }
 }
 
 
@@ -357,7 +408,7 @@ int matchStateStrong(char** arr, int index, int size) {
 // If the index is the first of some number of entries that comprise a US/CA postal code,
 // then the function will return 1. 
 // Otherwise it will return 0
-int matchAddress(char ** arr, int index, int size) {
+int matchStreetAddress(char ** arr, int index, int size) {
 
     // All valid addresses must begin with a number. This number may include 
     // fractions or decimals and may be multiple segments.
@@ -489,7 +540,7 @@ int matchCity(char ** arr, int index, int size) {
 
     // longest us city name in terms of word count is Kinney and Gourlays Improved City Plat
     // barring official names like "La Villa Real de la Santa Fe de San Francisco de Asis" -- which is Santa Fe
-    while (count < size && count < 6) {
+    while (index + count < size && count < 6) {
         for (int i = 0; i < strlen(*(arr + index + count)); i++) {
             if (!isalpha(*(*(arr + index + count) + i)) && *(*(arr + index + count) + i) != '-'
                 && *(*(arr + index + count) + i) != '.') {
@@ -537,6 +588,23 @@ int matchCountry(char ** arr, int index, int size) {
         free(country);
         return 0;
     }
+}
+
+// if the given array has a street suffix at the given index, we return 1
+// otherwise we return 0
+int matchStreetSuffix(char ** arr, int index, int size) {
+    char * suff;
+    // iterate backwards from the last possible street segment
+    if (*(*(arr + index) + strlen(*(arr + index)) - 1) == '.') {
+        suff = calloc(strlen(*(arr + index)), sizeof(char));
+        memcpy(suff, *(arr + index), strlen(*(arr + index)) - 1 );
+    } else {
+        suff = calloc(strlen(*(arr + index)) + 1, sizeof(char));
+        memcpy(suff, *(arr + index), strlen(*(arr + index)));
+    }
+    int result = strInArr(suff, (char**)streetSuffixes, PARLOCSTRSUFS);
+    free(suff);
+    return result;
 }
 
 
@@ -836,32 +904,31 @@ void parseLocationASLoc(ASLocation * location, char * str) {
         }
     }
 
+    if (state_len == 0) {
+        free(occupied);
+        clearStrArr(arr, size);
+        free(arr);
+        return;
+    }
+
     int nextocc = 0; // storing the next occupied segment, so we can avoid unnecessary checking and overlaps.
     while (*(occupied + nextocc) == 0 && nextocc < size - 1) nextocc++;
 
     for (int i = 0; i < size; i++) {
         if (*(occupied + i) == 1) continue; // segment already accounted for
-        if (i > nextocc) {
+        if (i > nextocc) {  // advance nextocc if we have passed it
             while (*(occupied + nextocc) == 0 && nextocc < size - 1) nextocc++;
         }
         if (addr_index == -1) {
-            if (matchAddress(arr, i, nextocc)) {
+            if (matchStreetAddress(arr, i, nextocc)) {
                 addr_index = i;
-                char * suff;
                 // iterate backwards from the last possible street segment
-                for (int j = nextocc - 1; j > i; j--) {
-                    if (*(*(arr + j) + strlen(*(arr + j)) - 1) == '.') {
-                        suff = calloc(strlen(*(arr + j)), sizeof(char));
-                        memcpy(suff, *(arr + j), strlen(*(arr + j)) - 1 );
-                    } else {
-                        suff = calloc(strlen(*(arr + i + j)) + 1, sizeof(char));
-                        memcpy(suff, *(arr + j), strlen(*(arr + j)));
-                    }
-                    int result = strInArr(suff, (char**)streetSuffixes, PARLOCSTRSUFS);
-                    free(suff);
-                    if (result) {
-                        suffix_index = j;
-                        break;
+                for (int j = nextocc - 1; j > i + 1; j--) {
+                    if (matchStreetSuffix(arr, j, nextocc)) {
+                        if (j - addr_index + 1 <= 7 && state_index - j + 1 <= 6 ) {
+                            suffix_index = j;
+                            break;
+                        }
                     }
                 }
             }
@@ -871,12 +938,19 @@ void parseLocationASLoc(ASLocation * location, char * str) {
     // RESTRICTION -- EXPAND LATER
     // only allows for Street City State format as a substring
     if (suffix_index != -1 && state_len != 0) {
+
+        if (suffix_index > state_index) { // city field cannot have length > 7
+            free(occupied);
+            clearStrArr(arr, size);
+            free(arr);
+            return; // EXIT if we flout this format
+        }
+
+
         for (int i = addr_index; i < state_index; i++) {
             if (*(occupied + i) != 0) {
                 free(occupied);
-                for (int i = 0; i < size; i++) {
-                    free(*(arr + i));
-                }
+                clearStrArr(arr, size);
                 free(arr);
                 return; // EXIT if we flout this format
             }
@@ -887,17 +961,13 @@ void parseLocationASLoc(ASLocation * location, char * str) {
         city_len = state_index - suffix_index - 1;
         if (city_len < 1) {
             free(occupied);
-            for (int i = 0; i < size; i++) {
-                free(*(arr + i));
-            }
+            clearStrArr(arr, size);
             free(arr);
             return;
         }
     } else {
         free(occupied);
-        for (int i = 0; i < size; i++) {
-            free(*(arr + i));
-        }
+        clearStrArr(arr, size);
         free(arr);
         return; // EXIT IF NOT IN RESTRICTED FORMAT
     }
@@ -949,10 +1019,91 @@ void parseLocationASLoc(ASLocation * location, char * str) {
     free(occupied);
 }
 
+
+/*  Takes a string as input and populates the provided ASInstance with the
+    location information the string contains. Unknown fields do not overwrite
+    what is already stored in the struct. If the provided ASInstance is NULL,
+    the function will return. 
+    
+    The string should be able to convey information to a human about the
+    location of an event, and contain little else. Strings containing irrelevant
+    information or lacking necessary location information may cause 
+    erroneous information to be returned.*/
 void parseLocation(ASInstance * inst, char * str) {
     ASLocation * loc = calloc(1, sizeof(ASLocation));
 
     parseLocationASLoc(loc, str);
 
-    mergeASLocation(inst, loc); // FIX LATER!!! Will not overwrite values as we desire
+    pushASLocation(inst, loc);
+
+    free(loc);
+}
+
+
+/*  Given a string as input, returns 1 if the string contains an address,
+    and 0 otherwise. The bounds of where the address matches is put into
+    start_index and end_index, but the actual address may exist outside 
+    these bounds in practice
+    
+    For an address to be valid, we need:
+        - a street address
+        - a street suffix
+        - a city
+        - a state
+    
+    We'll assume that we always lead with a street address, so we're looking for a pattern
+    where we have (houseNumber)(StreetName)(StreetSuffix)(city)(state) where each parenthesized field has
+    length >= 1, and there are no gaps between fields.*/ 
+int matchAddress(char * str, int * start_index, int * end_index) {
+    char ** arr = NULL;
+
+    int count = splitString(&arr, str);
+    if (arr == NULL) return 0;
+    if (count < 5) {
+        clearStrArr(arr, count);
+        free(arr);
+        return -1;
+    }
+
+    int start; // starting index bound of our search
+    int end; // ending index bound of our search
+
+    for (start = 0; start < count - 5; start++) {
+        // scroll until we find the start of an address
+        if (matchStreetAddress(arr, start, count)) {
+            for (end  = count - 1; end > start + 2; end--) {
+                // scroll from the end until we find a state
+                if (matchStateStrong(arr, end, count)) {
+                    for (int i = end - 2; i > start + 2; i--) {
+                        // scroll in between looking for a street suffix
+                        if (matchStreetSuffix(arr, i, count)) {
+                            // if suffix is too far away then the address
+                            // is invalid, so we continue searching
+                            if (i - start + 1 > 7) break; 
+                            // same if there is too large a gap between state and suffix
+                            if (end - i + 1 > 6) break;
+
+                            for (int j = i + 1; j < end; j++) {
+                                // scroll from suffix to end looking for a city
+                                if (matchCity(arr, j, end)) {
+                                    // we now have something that matches a valid address
+                                    clearStrArr(arr, count);
+                                    free(arr);
+                                    printf("state: %d, suffix: %d, city: %d\n", end, i, j);
+                                    *start_index = strIndexFromArr(str, start);
+                                    *end_index = strIndexFromArr(str, end);
+                                    return 1;
+
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    clearStrArr(arr, count);
+    free(arr);
+    return 0;
+    
 }
