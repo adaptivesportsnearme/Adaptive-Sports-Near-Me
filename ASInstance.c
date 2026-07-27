@@ -128,7 +128,7 @@ void printASInstance(ASInstance* inst) {
     printf("sport name = %s\norganization_id = %s\n", inst->sport_name, inst->organization_id);
     printf("zip = %s\ncity = %s\nstate = %s\ncountry = %s\n", inst->zip, inst->city, inst->state, inst->country);
     printf("address line 1 = %s\naddress line 2 = %s\n", inst->address_line_1, inst->address_line_2);
-    printf("start year = %dstart month = %d\nstart day = %d\nstart time = %d\nend year = %d\nend month = %d\nend day = %d\nend time = %d\n", inst->start_year, inst->start_month, inst->start_day, inst->start_time, inst->end_year, inst->end_month, inst->end_day, inst->end_time);
+    printf("start year = %d\nstart month = %d\nstart day = %d\nstart time = %d\nend year = %d\nend month = %d\nend day = %d\nend time = %d\n", inst->start_year, inst->start_month, inst->start_day, inst->start_time, inst->end_year, inst->end_month, inst->end_day, inst->end_time);
     printf("timezone = %s\nrepeat = %s\n", inst->timezone, inst->repeat);
     printf("UTC time = %d\nallows beginners = %d\nallows intermediate = %d\nallows advanced = %d\n", inst->UTC_time, inst->allows_beginners, inst->allows_intermediate, inst->allows_advanced);
     printf("age floor = %d\nage ceiling = %d\ncost = %d\n", inst->age_floor, inst->age_ceil, inst->cost);
@@ -140,7 +140,7 @@ void printASInstance(ASInstance* inst) {
 void printASFullTime(ASFullTime* time) {
     if (time == NULL) return;
     
-    printf("start year = %dstart month = %d\nstart day = %d\nstart time = %d\nend year = %d\nend month = %d\nend day = %d\nend time = %d\n", time->start_year, time->start_month, time->start_day, time->start_time, time->end_year, time->end_month, time->end_day, time->end_time);
+    printf("start year = %d\nstart month = %d\nstart day = %d\nstart time = %d\nend year = %d\nend month = %d\nend day = %d\nend time = %d\n", time->start_year, time->start_month, time->start_day, time->start_time, time->end_year, time->end_month, time->end_day, time->end_time);
     printf("UTC time = %d\n", time->UTC_time);
     printf("timezone = %s\nrepeat = %s\n", time->timezone, time->repeat);
 
