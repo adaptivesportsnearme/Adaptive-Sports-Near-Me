@@ -1,13 +1,15 @@
 import requests
+import asyncio
+import httpx
+from selectolax.parser import HTMLParser
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 #"Bad" links are those we know do not have any need for the project, will update to keep it in a txt file for simplicity's sake
 bad_links = ["www.donordrive.com", "www.eosfitness.com", "www.youtube.com", "eosfitness.com", "www.ossur.com"]
 #Max_depth is kept for testing purposes, do not want the crawler to get out of hand yet.
 class SimpleWebCrawler:
-    def __init__(self, start_url, max_depth=2):
+    def __init__(self, start_url):
         self.start_url = start_url
-        self.max_depth = max_depth
         self.visited_urls = set()
         self.base_domain = urlparse(start_url).netloc
 
@@ -24,8 +26,6 @@ class SimpleWebCrawler:
         return not_bad and not_asset
 
     def crawl(self, current_url, current_depth=0):
-        if current_depth > self.max_depth or current_url in self.visited_urls:
-            return
 
         print(f"[{current_depth}] Crawling: {current_url}")
 
@@ -35,7 +35,7 @@ class SimpleWebCrawler:
 
         try:
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-            response = requests.get(current_url, headers=headers, timeout=5)
+            response = httpx.get(current_url, headers=headers, timeout=5)
             response.raise_for_status()
             print(f"Raw response: {response.text}")
             data = response.json()
@@ -56,8 +56,8 @@ class SimpleWebCrawler:
                     if clean_url not in self.visited_urls:
                         self.crawl(clean_url, current_depth + 1)
 
-        except requests.exceptions.RequestException as e:
+        except httpx.exceptions.RequestException as e:
             print(f"Error crawling {current_url}: {e}")
 
-crawler = SimpleWebCrawler(start_url="https://www.challengedathletes.org/", max_depth=100)
+crawler = SimpleWebCrawler(start_url="https://www.challengedathletes.org/")
 crawler.crawl(crawler.start_url)
