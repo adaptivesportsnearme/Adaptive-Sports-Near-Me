@@ -1,8 +1,22 @@
 #include "parseTime.h"
 #include "parseUtils.h"
 
+// Author: Clara James - claramacjames7@gmail.com
+
 /*
-    How to parse time
+        This module is an incomplete version of a module
+        that would parse time information from a provided
+        string and retrieve our desired fields. Those fields
+        are:
+         - Starting and ending year
+         - Starting and ending month
+         - Starting and ending day
+         - Starting and ending time of day (7:00 PM or 19:00, for example)
+         - Timezone name, per the tz database
+         - Whether or not the provided time is in UTC or local time
+
+        Time Parsing Requirements and heuristics
+
         All valid fields must either begin the string or have a space before.
         E.G. BJanuary 18 2005 is not a valid date
         Date formats:   (M)M/(D)D/YYYY -> common in US
@@ -10,12 +24,59 @@
                         Month Day
                         Month Day(th/st/nd)
                         If year not present, next instance of the date
-                        Use time.h
         Time formats:   HH:MM
                         HH:MM:SS
                         HH:MM PM/AM
                         H:MM PM/AM
                         H PM/AM
+
+        Time Parsing Retrieval Methods
+
+        We divide an input string along defined boundaries (spaces and commas
+        for example) and try to categorize each segment into one of the fields
+        we are looking for. If we see that any type of information is repeated twice,
+        we interpret the first two instances as the starting and ending times. We'll
+        assign which one is the starting time
+        
+        If any field appears more than three times we ignore the third appearance 
+        onwards, but in general we should not be passing these kinds of strings. 
+        We would like to be filtering these kinds of strings out in whatever module 
+        is calling this one. Finally, if we see that there is partial information 
+        provided, we will want to assume the missing info in most cases. For instance, 
+        if today is 8/11/2026, and I give you one of the following:
+
+            - August 14th
+            - The 14th
+            - Friday (with no other date information)
+        
+        You should be assuming these refer to 8/14/2026, as this is the next day that
+        satisfies the provided information. However, don't worry as much about the 
+        last two cases for now, and just focus on inferring year, as that is what is
+        most likely to come up. If timezone is missing, we'll assume local time always, 
+        and we'll never assume UTC time unless it is explicitly specified. If not provided, 
+        we'll find timezone later, from location data.
+
+        We'll also make sure we are making a number of obvious validity checks, such as making
+        sure that all dates and times will happen with the Gregorian calendar. In the future, it
+        might also be nice to do some work around daylight savings, and standardize behavior there,
+        but the time change occurs at 2AM, so we can safely ignore this for now.
+
+        Finally, we'll need to figure out whether we are using 24-hour or 12-hour time. In general,
+        since we're working in the US and Canada for now, we'll assume 12-hour time for the US, and
+        24-hour time for Canada, but we'll need to figure out how to use location information
+        if we parse time before location.  However you decide to represent this ambiguity,
+        please let me know about it so we can agree on something that causes as few errors as possible.
+
+        This whole explanation should be a relatively complete explanation of the intent of this
+        module, and honestly, it's probably not necessary to refer to the below functions, as they're
+        incomplete and working with c-strings. If you want a better understanding of how we're splitting
+        and parsing information, parseLocation.c will have a more complete suite of matching, getting,
+        and parsing functions. Thank you for reading this description in full. Let me know you did and i'll 
+        buy you a candy bar or something. In general, like with the entirety of the project, please try 
+        to take a modular approach, and divide key operations into functions, so that we can have more readable
+        and more easily fixable code.
+
+
 
 */
 
@@ -25,6 +86,8 @@
 // we return the number of array segments the matched date is comprised of
 // The accepted format here is (M)M/(D)D/(YY)YY or (M)M-(D)D-(YY)YY or (M)M/(D)D or (M)M-(D)D
 int matchNumDate(char** arr, int index, int size) {
+
+    // THIS FUNCTION IS UNFINISHED
 
     // this one only ever matches single segments, so
     // we'll make a simpler reference to our one segment
@@ -134,6 +197,8 @@ int matchNumDate(char** arr, int index, int size) {
 */
 void parseNumDate(ASTime * astime, char ** arr, int index) {
 
+    // THIS FUNCTION IS UNFINISHED
+
     time_t seconds = time(NULL);
     struct tm* currenttime = localtime(seconds);
 
@@ -187,6 +252,8 @@ void parseNumDate(ASTime * astime, char ** arr, int index) {
 
 
 void parseTimeASTime(ASTime * time, char * str) {
+
+    // THIS FUNCTION IS UNFINISHED
 
     char ** arr;
     int count = splitString(&arr, str);
