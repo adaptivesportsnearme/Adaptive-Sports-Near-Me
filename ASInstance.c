@@ -52,6 +52,48 @@
     barring serious error in description. If a given event has multiple names or descriptions,
     we should only capture the most clear and accurate one, and discard the rest.*/
 
+/* ########################### IMPLEMENTATION GUIDE ##############################
+
+    To be honest, I will probably try to do this one myself before the next semester
+    starts, but if I was lazy: 
+    
+    1) Tell me I was lazy and make me feel bad
+
+    2) I actually have very little experience making something like this in python. I'll
+    probably talk more about the functions and what they should do
+
+    Clone: (called copy here) Make a new copy of the container with all the same data. Make
+    sure there's no representation exposure.
+
+    Clear: Sets all values of the container back to their defaults
+
+    Free: Ignore, since python does its own memory management
+
+    Print: Print all information contained in the container, alongside its label.
+           By my memory, this will be an override, since python already allows for
+           printing definitions
+
+    Merge: A way to combine data. Merging preserves all non-default information in the target
+        we're merging to. Any non-default fields in the source container are pushed to the target
+        but only if that field in the target is default.
+
+    Push: Push copies all non-default fields in the source to the target, leaving fields in the target
+        where the source has a default value. This is kind of a reverse merge.
+
+        Both merge and push result in the target container having the combined fields of both source
+        and target. Where both fields have non-default values: merge keeps the target's values, and push
+        keeps the source's values.
+
+    I'm not sure how push and merge will work if we create a confidence system. They'll honestly probably become 
+    obsolete, since we'll just want to keep the values we're most confident on.
+
+
+
+
+*/
+
+
+
 /*  Alongside the basic structure of the data type, this module will also include 
     various functions to help with handling it.*/
 
