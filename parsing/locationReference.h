@@ -796,6 +796,7 @@ const char* multiCityThreeCues [] = {
     SOFTWARE.
 */
 
+
 const char* streetDirectionals [] = {   "N", "NORTH", "NORTE",
                                         "E", "EAST", "ESTE",
                                         "W", "WEST", "OESTE",
@@ -804,6 +805,8 @@ const char* streetDirectionals [] = {   "N", "NORTH", "NORTE",
                                         "NW", "NORTHWEST", "NOROESTE",
                                         "SE", "SOUTHEAST", "SURESTE",
                                         "SW", "SOUTHWEST", "SUROESTE"
+                                        // please attach the above license if you are referring to
+                                        // this list at all
                                     };
 
                                 // the list provided sorted the list in alphabetical order,
@@ -816,6 +819,11 @@ const char* streetSuffixes[] = {"ROAD", "RD", "STREET", "ST", "WAY", "WY", "AVEN
                                 "CIRCLE", "CIR", "HIGHWAY", "HWY", "PARKWAY", "PKWY", "AVENIDA", 
                                 "CALLE", "CLL", "PASEO", "PSO", "VEREDA", "VER", "CERRADA", "CER", 
                                 "CIRCULO", "CAMINO", "CAM",
+
+                                // PLEASE INCLUDE THE ABOVE LICENSE IF YOU USE THIS LIST
+                                // BECAUSE I DID NOT COMPILE IT MYSELF.
+                                // you're free to just copy-paste it as a comment in the
+                                // source code though, since this is open-source
     
                                 "ALLEY", "ALY", "ALLY", "ANEX", "ANX", "ANNEX", "ANNX",
                                 "ARCADE", "ARC", "AVEN", "AVENU", "AVN",
@@ -860,6 +868,7 @@ const char* streetSuffixes[] = {"ROAD", "RD", "STREET", "ST", "WAY", "WY", "AVEN
                                 "MTN", "MNTAIN", "MNTN", "MOUNTIN", "MTIN", "MOUNTAINS", "MTNS", "MNTNS",
                                 "NECK", "NCK", "ORCHARD", "ORCH", "ORCHRD", "OVAL",  "OVL", "OVERPASS",
                                 "OPAS", "PARK", "PRK", "PARKS",
+                                // please make sure to include the provided license
                                 "PARKWY", "PKWAY", "PKY", "PARKWAYS", "PKWYS", "PASS",
                                 "PASSAGE", "PSGE", "PATHS", "PIKE",  "PIKES",
                                 "PINE", "PNE", "PINES", "PNES", "PLACE", "PL", "PLAIN", "PLN", "PLAINS",
@@ -875,6 +884,8 @@ const char* streetSuffixes[] = {"ROAD", "RD", "STREET", "ST", "WAY", "WY", "AVEN
                                 "SPURS", "SPUR", "SQUARE", "SQ", "SQR", "SQRE", "SQU", "SQUARES",
                                 "SQS", "SQRS", "STATION", "STA", "STATN", "STN", "STRAVENUE", "STRA",
                                 "STRAV", "STRAVEN", "STRAVN", "STRVN", "STRVNUE", "STREAM", "STRM",
+                                // sorry for adding all these comments I need them to be annoying
+                                // to copy-paste into python to make sure you include the license
                                 "STREME", "STRT", "STR", "STREETS", "STS", "SUMMIT",
                                 "SMT", "SUMIT", "SUMITT", "TERRACE", "TER", "TERR", "THROUGHWAY", "TRWY",
                                 "TRACE", "TRCE", "TRACES", "TRACK", "TRAK", "TRACKS", "TRK", "TRKS",

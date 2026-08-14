@@ -34,12 +34,272 @@
     of this module's internal implementation.
 */
 
+/*  ###########################  IMPLEMENTATION GUIDE  ################################
+
+    Hello! Please read this whole thing in full. I've spent something like 10-20 hours accumulating
+    the below information, and reading this should help save you from spending so much time on this
+    task.
+
+    GENERAL INFORMATION
+        When we get a string, we'd like to split it up along its boundaries (whitespaces, commas, 
+        probably periods) and determine which segments correspond to different information, and 
+        which contain no useful information at all. Once we've labeled what information 
+        is what, we'll extract it and pass it to the provided container. 
+        
+        At its current state there's no such feature, but I'd like to add an informal confidence 
+        measure for each field, so we can overwrite weak matches with stronger ones. It would 
+        also be nice for the human reviewer. Either way, we'll try to develop a confidence scoring system.
+
+        I think it's best to develop different (private) matching functions and then check the string
+        against each of them. That way, we could work on matching different kinds of input, and we wouldn't
+        need huge long if-then chains to control for variety in input.
+
+
+    In this module, we want to extract the following information from a string:
+
+     - STREET ADDRESS
+            Like "1234 N. Hollywood Blvd." For now, we want to push both address lines
+            into address_line_1. This is the second hardest field to retrieve accurately,
+            so here are some principles for parsing this field.
+            
+             - All street addresses must begin with a house number. The first character
+               in this house number must be a digit. However, it is worth noting that not
+               all house numbers are strictly digits. 
+            
+                    Letters are allowed: "221B Baker Street", "221 B Baker Street"
+                    Hyphens are allowed: "112-10 Bronx Road"
+                    Fractions are allowed: "123-1/2 Alphabet Rd", "123 1/2 Alphabet Rd"
+                    Spaces are allowed: "237 42 Frontera Ln."
+               
+               However, if a house has a letter, hyphen, or fraction in the first segment,
+               it cannot be a two-segment address. We're also assuming that a house number can consist
+               of no more than two segments.
+
+             - Some street addresses may have directionals : N, E, S, W, NE, ...
+               These can generally be considered part of the street name, and are relatively
+               safe to ignore
+
+             - Street names are weird and loosely formatted, but we can get some restrictions. We mostly
+               just want to make sure their characters are relatively normal. Street names can have spaces,
+               numbers, hyphens, commas, apostrophes, periods, and probably more. We do want to make sure
+               that there is at least one segment dedicated to a street name, as the minimal possible address
+               is a house number and street name.
+               
+             - Almost always, street names will end in a street suffix. There is a super-comprehensive list of
+               these in locationReference.h, which you should use, BUT MAKE SURE YOU INCLUDE THE ATTACHED LICENSE
+               IF YOU USE THIS AS I DID NOT COME UP WITH THE LIST!!!!
+
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^  IMPORTANT ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+               A lot of street suffixes will end with a period, which is important, as periods are not included
+               in the list in locationReference.h, so you should get rid of trailing periods before checking for
+               list inclusion.
+
+               It's also reasonable to require that an address has a street suffix to match, as it is almost
+               unambiguously the end of the street address
+
+             - Positionally, street names usually occur first, so if there are multiple candidates, we should 
+               take the first, but we should also avoid these kinds of strings being passed.
+
+     - CITY
+            This is the hardest field to extract, because it lacks uniform formatting, and
+            it's very easy to confuse with other fields (Washington and Canada are both valid
+            city names). 
+
+             - US city names can contain digits, commas, hyphens, and periods (usually only
+               after certain things, like "St", "Ft", etc.). Canada has a city called "Saint-Louis-du-Ha! Ha!"
+               so they're just doing whatever. Just make sure they lead with an alphabetic character. Diacritics
+               should be flattened to their ASCII counterparts before being passed, so just worry about their
+               ASCII representation.
+
+             - Position is important for this one. City is usually placed behind the street address and right
+               before State. It's not unreasonable to assume for now that any segment immediately before state that 
+               ends in a comma is the last segment in a city name.
+
+             - Because of how ambiguous it is, we should try to get state and country before city, so we have the
+               least risk of accidentally misidentifying it.
+
+             - Also, we can make safer assumptions by knowing a list of common cities. Also in locationReference.h
+               there is a list of major US and Canadian cities, with just about every city with a population of
+               above 100k people. It's far from comprehensive, but if we get a positive match, then at least we 
+               can be pretty certain that we've found the city field. I've also included a list of the first words
+               of major multicities, but hopefully python is friendlier in terms of string matching.
+
+     - STATE
+            This is one of the friendliest fields to extract, because we can exhaustively list them. Although
+            now that I think about it, it would probably be best to add US territories, as they're not currently 
+            included in our list of abbreviations.
+
+             - I've included a list of US States and Canadian territories. I've also attached a list of common 
+               misspellings, but we should be careful about false positive matches.
+
+             - The only real tricky part here is that a lot of other fields can look like states. For instance
+               there are a lot of cities called Washington or Wyoming. There are also street suffixes that can
+               look like states, like CT (court), WY (way), or MT (mountain). Finally, there are also streets 
+               named after states. As usual, use position as a tiebreaker. States usually go last in a string, 
+               but it might also be worth checking that a state name is not preceded by a house number and 
+               succeeded by a street suffix
+
+     - Country
+            United States, US, and USA are nearly unambiguous state indicators. Canada is a little trickier,
+            as I've found both streets and cities in the US named Canada.
+
+             - In the typical mailing address format, country goes last, so use a backwards sweep to find
+               country.
+
+             - But in general don't sweat this field too much. In the future we'll probably be storing a default
+               country for organizations, and that's probably the safest location field to assume is the same
+               across an organization's listings.
+
+             - Honestly, country is excluded so much, it might only be worth checking as the last location field.
+               If you're using the same splitting technique, the module calling the function might be inaccurate,
+               so it's worth checking more than just the last segment, but we can probably safely assume country
+               is never before any other field.
+
+             - Also a confident state match necessarily determines country. So if you know the state is NL
+               (Newfoundland and Labrador), then you're definitely in Canada. Similarly, ZIP code formats
+               vary by country, so that also determines country.
+
+     - ZIP
+            Probably the most unique field, so it's very nice to grab this one first. There are three considerations:
+            ZIP, ZIP+4, and the Canadian Postal Code format. The Canadian postal code format is more complex than the US,
+            but both are pretty restrictive. 
+
+             - The only potential mixup is for house number. The best approach here is to use position. House
+               numbers are usually the first field, and ZIP is usually last or second to last, so choose the last
+               one if there's ambiguity.
+
+             - ZIP is nice because it determines country for sure, and usually state, though some ZIP codes cross states.
+               Some ZIP codes even determine down to street address, but most of those are for huge corporate headquarters
+               or federal facilities, so we're unlikely to see those ZIP codes in practice.
+
+     - TIMEZONE
+            I'm still not sure how to tackle timezone, as it's a location-determined field that tells you
+            how to interpret time data. I'll just say that timezones are weird. The tz database splits a lot
+            of major time zones into smaller parts based on how certain regions legislate time. Each tz timezone
+            is a region where all local clocks have agreed since 1970, so it encodes both UTC offset (PST, EST, etc.)
+            and how things like daylight savings are handled. Also note that there are some cities that have
+            two timezones, so this one isn't always determinable from city, but it usually is.
+
+
+    OTHER PARSING HEURISTICS
+      - No single segment provides information for more than one field, other than
+        by dependency
+    
+      - Information is usually provided in the order of the US Mailing Format:
+            [House Number](Optional Directional)[Street Name][Street Suffix](Field separator, like comma or newline)
+            [City], [State] [ZIP] (Country)
+        And so we should try to always be able to extract information in this format. In other words,
+        it's better that we can only retrieve information in this format than being able to retrieve 
+        information in all other formats but not this one.
+
+      - Certain fields are likely to be clumped together regardless of format. For the final parser,
+        address lines 1 & 2 are likely to be together, and city, state, and ZIP are likely to be clumped.
+
+      - If multiple things could be the same field, the least ambiguous entry should be chosen. For
+        instance, imagine we see that both CT and New Hampshire could be state. CT matches as a state or
+        a street suffix, but New Hampshire only matches as a state, so we choose New Hampshire as our state.
+
+      - As the previous heuristic indicates, in general each field is represented only once. We should not
+        see that there are multiple cities for a single address, or multiple states. If we're actually seeing
+        that there are multiple addresses, then that's an indication we should either be looking at only one
+        (Like if the event is a bike ride from location A to location B, where since we only care about starting
+        location, we choose Location A), or that we're looking at two adaptive sports instances (like on calendar
+        pages).
+
+      - Location information is usually presented without any non-location information between. In other words,
+        once we see our first location match, we're likely to see only location information until all location
+        info has been conveyed
+
+      - Single fields are pretty much never strongly separated (Across html tags, or by a newline), and are rarely
+        weakly separated (by commas, for instance). These separators should be leveraged to more accurately divide
+        the input, and you'll see there is actually an unused function to identify these separators in a string.
+
+
+    TESTING GUIDELINES
+        For developing test cases, please try the following
+
+          - A lot of standard-format addresses, including those separated by newline. These are the addresses
+            that will most often be passed, so it's super important to make sure we can accurately parse these.
+            Make sure to test:
+
+              - Long instances in fields -- long city names, long state names, long street names, especially those with 
+                common punctuation marks to make sure those don't cause problems
+
+              - Short instances as well -- the first version of the matchAddress function here accidentally
+                didn't match for single-word street names, as I was super focused on matching long street
+                names accurately
+
+              - Combinations of optional fields (country, street directionals, zip codes)
+
+              - Fields that look like each other -- state names as city and street names, for instance. Make 
+                sure we can leverage the standard format to handle these ambiguities.
+
+              - Similar to the above, make sure we test house numbers that look like zip codes, including when there's
+                no zip code present.
+
+              - Field mismatches, like US postal codes with a Canadian Territory. Try a couple of these, where
+                two fields cannot coexist. But don't worry about nonexistent cities at this point, we won't check
+                that all cities are real cities in the given state. Also don't worry about ZIP/State mismatches either.
+                Just make sure that mismatches for implied country don't go through.
+
+              - https://www.summet.com/dmsi/html/codesamples/addresses.html also contains a list of standard format 
+                addresses. Just note that we don't care about P.O. box or name, since that shouldn't occur as an 
+                adaptive sports location.
+
+          - Some single-field info, especially street address. Anything that strongly matches a street address is fine to 
+            pass, but avoid false positives ("100 people" should not register as a street address). Edge-case false 
+            positives are acceptable though, like "20 Rusty Springs" (since Springs is a street suffix), since those will 
+            go through the human review queue. The risk of false positives seems high, but we should not be ignoring
+            valuable information like "1203 N Webster St.", which is unambiguously an address. It would be nice to 
+            indicate confidence somehow on certain fields, so we could overwrite mismatches like that if we find a 
+            more appropriate street address, but that's something I'll elaborate on later.
+
+            The only other single field we should extract is Canadian ZIP. Any other format is too ambiguous for us to
+            want to take it. (For instance "10000 - 6000 = 4000" could accidentally match for ZIP+4 10000-6000)
+
+          - Also, selected sequences of fields from the US standard address format, in case one location is passed in
+            multiple parts. In particular, sequences of city, state, zip, and country should pass in combination.
+
+          - For negative matches, try a lot of random sentences with numbers in them, or lists. Also try anything
+            you can come up with that looks like an address at first but clearly isn't. Assume people aren't putting
+            adversarial addresses on their websites, and only choose cases that could appear in the real world. Try
+            to put things that could match for certain fields to make sure we're choosing as few false positives as 
+            possible. Things like "12 reasons you should never visit Canada" and "Washington, Oregon and California"
+            should not match.
+        
+          - Also check for exceptional strings, like those with multiple newlines in a row, zero-length strings, 
+            or super long strings of characters with no spaces. However, string data should be cleaned before being
+            sent here, so don't worry about non printable characters except for \r and \n
+
+          - Also, every string that matches as an address should be parseable. It doesn't have to be the other way
+            around (it's fine if the parsing function is stronger than the matching function, but we should ideally
+            be trying to make them work with the same strings), but it's pretty necessary that anything that matches 
+            can be parsed. Thanks for reading all the way through, let me know you did and I will buy you a candy bar.
+            In python you can probably put every test case in one text file and set a for loop to make sure that every 
+            string that matches can be parsed as well.
+
+    Please let me know if you have any questions on how to transfer this parsing process, and I'll be happy to help.
+    You can also refer to my implementation, but please be aware that the parsing function and especially the address-matching
+    function was a little bit rushed to complete deadlines, and requires a lot of restrictions.
+
+    I'll also note that when you are passing information into a container, try to assemble all the information first before 
+    passing it into the provided container, so there's less risk of strange behavior surrounding crashes or other errors.
+
+
+*/
+
 
 #include "parseLocation.h"
 #include "locationReference.h"
 
 
 // ------------- BASIC HELPER FUNCTIONS ---------------------- //
+
+
+// Hello just ignore these. they're pretty much all default python methods, 
+// or otherwise one-liners. For instance the splitString() method is basically 
+// just string.split()
 
 
 // returns true if the strings are equal -- case insensitive
@@ -538,7 +798,7 @@ int matchCity(char ** arr, int index, int size) {
 
     int count = 0;
 
-    // longest us city name in terms of word count is Kinney and Gourlays Improved City Plat
+    // longest us city name in terms of word count is "Kinney and Gourlays Improved City Plat"
     // barring official names like "La Villa Real de la Santa Fe de San Francisco de Asis" -- which is Santa Fe
     while (index + count < size && count < 6) {
         for (int i = 0; i < strlen(*(arr + index + count)); i++) {
