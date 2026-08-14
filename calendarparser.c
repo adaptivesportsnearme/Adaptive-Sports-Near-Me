@@ -1,9 +1,68 @@
 /* A module to handle parsing google calendar information */
 
-// more information on Google Calendar formatting can be found here:
-// https://developers.google.com/workspace/calendar/api/concepts/inviting-attendees-to-events#link-user
+/* ########################### IMPLEMENTATION GUIDE ###########################
 
-// although for whatever reason it omits that &ctz= also stores the timezone as of 20260616T172200 ;)
+	While calendar links aren't universal, they are very useful as they explicitly
+	code information down to a very precise level, and they're usually very easy to 
+	extract information from.
+
+	This documentation will probably be a little looser than some of the others.
+	It should be possible to expand this module to parse outlook calendar links.
+	If you're looking for example links, you can usually find them with a little
+	searching. Just look up any town + adaptive sports and try to find a schedule
+	or a list of events, and a lot of them will have google calendar links that 
+	are super easy to extract from. These ones are super nice because the event-creators
+	have already formatted information about their event into a format similar to ours.
+
+	Google calendar links use percent-encoding, a way of passing more data into a
+	link than it otherwise could contain. Percent-encoding encodes complex characters
+	with a percent, then a two-digit hexadecimal number. You can find info on percent-
+	decoding in python here: 
+		https://stackoverflow.com/questions/33143504/how-do-i-encode-decode-percent-encoded-url-strings-in-python
+
+	Google calendar link information fields are separated by ampersands. Each field begins
+	with "&[field name]=" and ends with either '&' as the start of another field, or with the
+	end of the link.
+
+	Here are the GC field names and their ASNM field name translations. It's really good to
+	be able to get an official title and description here, since those will be tricky to find
+	otherwise.
+
+	"&text=" -- title (REQUIRED FIELD)
+	"&dates=" -- time information (REQUIRED FIELD)
+			time information in stored in the ISO 8601 basic time format. See the parseGoogleTime
+			function for more information
+	"&location=" -- location
+	"&stz=" -- the tz-database timezone for the start time of the event
+	"&etz=" -- the tz-database timezone for the end time of the event (disregard this, as we only take stz
+				if both stz and etz are present)
+	"&ctz=" -- the tz-database timezone for both the start and end of an event
+	"&details=" -- description
+
+	It also seems like "ACTION=template" is required in the calendar link to indicate that calendar information
+	is being stored in the link itself, but I feel like I've seen links that go against this rule.
+
+	More information on Google Calendar formatting can be found here:
+	https://developers.google.com/workspace/calendar/api/concepts/inviting-attendees-to-events#link-user
+
+	Information on the IANA format: https://en.wikipedia.org/wiki/ISO_8601
+	The date format here is YYYYMMDDTHHMiSS/YYYYMMDDTHHMiSS
+	Where T is the actual letter T, and Mi indicates minutes.
+
+	The time range from 1:51PM on August 14th, 2026 to 7:00AM on September 1, 2027 is then:
+	20260814T135100/20270901T070000
+
+	If you see Z at the end of these times, then they are in UTC, and the utc_time flag should
+	be set to 1. Otherwise, assume local time.
+
+	Once you have these, we'll try to expand to other calendar links, and also .ics files (which
+	are a type of plaintext, so they should actually be super easy).
+
+
+
+*/
+
+// 
 
 // This module has been tested for memory leaks, even in the presence of broken and adversarial links
 // Its accuracy has also been vetted.
